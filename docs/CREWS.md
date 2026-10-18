@@ -1,6 +1,6 @@
-# Crews — game integration (activation pending)
+# Crews — live private alpha
 
-The live game still offers Rival Routes and two-player Convoy Escape. The hosted crew database is provisioned and verified, but The crew garage and sign-in screens are implemented. The deployed match service still needs its server-only database configuration before account-backed progress can be enabled.
+The live game still offers Rival Routes and two-player Convoy Escape. The hosted crew database is provisioned and verified, but The crew garage and sign-in screens are implemented. Render is configured and the live health endpoint reports `crews: true`. Account-backed progression is enabled for the private alpha; human email delivery/sign-in still needs end-to-end verification.
 
 The proposed first release restores Mara and Jun's community garage through successful Convoy escapes: lights at 5 wins, open doors at 15, a welcoming home at 30. These are shared cosmetic/story milestones, with no handling, speed or rescue advantages. Eight members per crew is the initial target; four-player live matches remain a later performance milestone.
 
@@ -16,7 +16,7 @@ The proposed first release restores Mara and Jun's community garage through succ
 
 ## API and configuration
 
-The API is absent by default. Set both `SUPABASE_URL` (the project's HTTPS origin) and `SUPABASE_SECRET_KEY` in the backend host's secret environment, after applying both migrations. Partial configuration fails startup. Do not place these values in `dist`, Android assets, Git or share links. The hosted database exists, but the Render secret environment has not been configured and these routes remain disabled in the deployed match service.
+The API is absent by default. Set both `SUPABASE_URL` (the project's HTTPS origin) and `SUPABASE_SECRET_KEY` in the backend host's secret environment, after applying both migrations. Partial configuration fails startup. Do not place these values in `dist`, Android assets, Git or share links. The hosted database and Render environment are configured. The deployed service reports crews enabled.
 
 Every request needs an allowed `Origin` and `Authorization: Bearer <user access token>`. POST requests require `application/json` and accept at most 512 bytes. Responses are not cached.
 
@@ -38,7 +38,7 @@ Run `npm ci --prefix server --ignore-scripts`, then `npm test --prefix server`. 
 
 Supabase is connected and the RUNROAD project has been created in the existing Free organization. The migrations are applied. Still verify Auth/Data API behavior and concurrent joins/duplicate submissions through independent connections before exposing the feature.
 
-Implement account sign-in for web and Android; bind authenticated identities to WebSocket seats. A room code or reconnect token is not an account. The backend endpoints are prepared; connect them to the client only after provider validation. Android must explicitly allow the new HTTPS routes through its WebView request filter. Do not expose database service credentials in the browser.
+Verify the implemented account sign-in on web and Android with a real approved email address; authenticated seat binding is implemented. A room code or reconnect token is not an account. The backend endpoints are prepared; connect them to the client only after provider validation. Android must explicitly allow the new HTTPS routes through its WebView request filter. Do not expose database service credentials in the browser.
 
 Wire authoritative terminal results to a durable retry/outbox mechanism and the database transaction. Match IDs must be random 128-bit values, separate from room codes. A database outage must show pending synchronization, never a false saved success. Explicit crew departure is covered locally; test account deletion and provider-side cascading separately. Deleting an account removes its membership and invitations through foreign keys; an empty garage left by account deletion still needs a cleanup policy. Then add and verify the garage UI, redeploy Render, publish the game and rebuild Android.
 
@@ -79,4 +79,18 @@ Android permits only the exact crew routes, the project's selected Auth routes, 
 
 Local verification includes small-screen browser inspection, all solo/campaign/ghost checks, 33 crew/multiplayer tests, and Android build/shared tests. The local WebSocket suite uses an injected provider and controlled terminal fixture; it does not claim a real user account or naturally completed live hosted race.
 
-Activation still requires confirmed placement of the Supabase server credential in Render, a backend deployment, redirect configuration and a human email sign-in test. The Site audience remains owner-private.
+Chrome activation is recorded below. A human email sign-in test is still required. The Site audience remains owner-private.
+
+## Chrome activation — 19 October 2026
+
+The user authorized completion in Chrome after the explicit database-access confirmation. Chrome was used to save `SUPABASE_URL` and the existing Supabase server credential in the protected environment of `runroad-convoy-alpha`. The modern key reveal control did not respond; the existing legacy `service_role` credential was used instead. It was not printed, committed, embedded in assets or written to a local credential file. The adapter supports both modern secret keys and existing legacy server JWTs, with the appropriate server Authorization header for legacy RPC calls. No new credential, paid resource or permission grant to another user was created.
+
+Supabase Site URL is now `https://heatwave-desert-run.stalinpusparaj47.chatgpt.site/`, verified after reloading its configuration screen. This is the default allowed sign-in destination; no wildcard redirect was added.
+
+Render deployment `dep-dbahnkk9v7es738igreg` is Live at backend commit `d7fefbf82201954f9eaba3a02934e77ff9e7c900`. Compute remains Free, auto-deploy remains off, private game files remain disabled on the backend, and existing allowed origins remain unchanged.
+
+Live verification returned `{status: "ok", rules: 1, crews: true}`. The crew endpoint rejected unsigned requests with 401 and foreign origins with 403. The deployed two-client WSS smoke test passed ready/countdown, authoritative shared movement, steering, native-origin access and token-bound reconnect. The complete local crew/multiplayer suite passed 34 tests.
+
+The live health flag confirms configuration, not a human account journey. No user sign-in email was sent by the agent. Actual email receipt, session verification, crew creation and an account-backed hosted win still require a human sign-in test. Supabase's default mail service remains restricted to approved alpha addresses; public launch needs SMTP configuration. The game remains owner-private.
+
+Chrome also created a real guest convoy room against the deployed service, confirming browser health fetch and WSS connection work. The test room was left cleanly, and Chrome was opened at the crew sign-in screen for the user.

@@ -46,3 +46,8 @@ Default game endpoint: wss://runroad-convoy-alpha.onrender.com/convoy
 `scripts/verify-convoy-live.mjs` passed against this deployment: health and approved-origin CORS, backend-only asset isolation, two actual WSS connections (web and Android origins), ready/countdown, shared server positions/police, steering movement and token-bound reconnect. The game now uses this verified endpoint by default outside localhost, with an optional connection-settings disclosure.
 
 Run `node scripts/verify-convoy-live.mjs https://runroad-convoy-alpha.onrender.com` to repeat the controlled smoke test. It creates a short-lived test room and closes the sockets; it does not print seat tokens or require payment. This is not a physical-device or sustained-capacity certification.
+
+
+### Crew activation (19 October 2026)
+
+Backend deployment `dep-dbahnkk9v7es738igreg` is live at `d7fefbf82201954f9eaba3a02934e77ff9e7c900` on the existing Free instance. The protected environment now connects to the dedicated RUNROAD Supabase project. `/health` reports `crews: true`; no server key is present in source or the APK. [Crews](CREWS.md) records the tested behavior and remaining email-delivery verification. No paid disk, database, instance upgrade or public Site sharing change was made.
