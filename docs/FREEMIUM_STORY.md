@@ -119,7 +119,7 @@ Then decide whether to invest in voice acting, more authored routes, replays, lo
 | Is freemium fair and viable? | Purchase conversion, net revenue per active player, voluntary ad completion, refund rate, retention by exposure |
 | Does it stay lightweight? | First-play latency, frame time, memory, crash/ANR rate, offline startup, thermal behavior |
 
-Analytics should use a minimal documented event schema. Do not collect message recipients, contact lists, dialogue text entered by players, or advertising identifiers for the core game. A multiplayer/server leaderboard is a separate feature requiring its own integrity and privacy design.
+Analytics should use a minimal documented event schema. Do not collect message recipients, contact lists, dialogue text entered by players, or advertising identifiers for the core game. Multiplayer is now part of the proposed roadmap below; its servers, score integrity and social features remain unimplemented.
 
 ## Store references checked on 18 October 2026
 
@@ -129,3 +129,15 @@ Analytics should use a minimal documented event schema. Do not collect message r
 - AdMob rewarded ads are opt-in; reward granting is tied to the native earned-reward callback: https://admob.google.com/home/resources/rewarded-ads-win-for-everyone/ and https://developers.google.com/admob/android/rewarded
 
 The implementation must check the applicable store, territory, and audience rules at release. No claim of awards, virality, or guaranteed revenue is made by this plan.
+
+## Multiplayer and competitor research update — 18 October 2026
+
+See [the racing market study and multiplayer decision](research/RACING_MULTIPLAYER_MONETIZATION.md) for evidence, commercial-model comparison, operating costs and acceptance gates. The recommendation remains provisional until audience choice and product tests. No subscriptions or multiplayer servers are activated.
+
+- **Rival Routes first:** asynchronous friend challenges with recorded ghosts, standardized stats and full gameplay seeds; label recorded opponents clearly. This provides social play without requiring friends online together.
+- **Convoy Escape next:** real two-player private cooperative missions. Recover supplies, draw pursuit for a friend and reach the exit together. One limited earned rescue creates a memorable comeback; no paid match advantage.
+- **Crews later:** small groups restore a community garage, followed by public matchmaking/four-player modes only when population, mobile performance and operating costs justify them.
+- **Commercial order:** free friend access + permanent cosmetics + optional rewarded ads; test a separately purchased cosmetic pass only after sustainable content production. Defer auto-renewing subscriptions. A permanent campaign unlock remains an alternative to test, not an additional launch paywall.
+- **Story connection:** online allies belong to the roadside network helping Mara and Jun bring people home. Solo story and the ending remain available offline; online missions add shared memories and earned mementos.
+
+The research includes CSR2, Asphalt, F1 Clash, Beach Buggy Racing 2, GRID Autosport, historical Mario Kart Tour and Horizon Chase 2/Apple Arcade. It distinguishes verified publisher features from recommendations and avoids claiming an unavailable current worldwide revenue ranking. Nintendo confirms Mario Kart Tour ended service in September 2026, so its subscription model is a historical reference.
