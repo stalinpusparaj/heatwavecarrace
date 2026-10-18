@@ -33,3 +33,15 @@ Tests validate all 500 layout definitions and safe spawns, all five objective co
 Google Flow artwork now supplies the main menu, five vehicle portraits, and five world backdrops. See `docs/ART.md` for provenance. Shared image atlases keep the total artwork payload near 505 KiB. Menu screens skip canvas painting.
 
 Gameplay adds nitro (tap the button or press Shift/N), charged by drifting, near misses, and wrecks. Initial charge allows one boost; boosts have a cooldown and require 40 charge. Wreck/near-miss chains multiply score up to ×5 and expire after five seconds or on a damaging hit. Drift trails reuse 140 marks. Skilled driving adds a capped credit bonus to the result. No entry fee, paid boost, or energy timer is introduced.
+
+## Realistic chase renderer
+
+The chase now uses Google Flow overhead vehicle sprites, keyed obstacle sprites, and terrain textures for all five worlds. A single 1536×1536 environment canvas caches road surfaces, lane markings, guardrails, vegetation, obstacles, and their shadows. Only one arena cache is retained. Realistic sprites replace the original block cars; fallback cars still render if image loading fails. Night worlds add headlight cones. Wreck silhouettes, smoke, flashes, dust, nitro exhaust, speed streaks, and a speed-responsive camera complete the chase view. This remains a lightweight 2D overhead renderer, not a 3D engine.
+
+Additional checks:
+
+```sh
+node --check dist/renderer.js
+```
+
+For the browser renderer test, serve the repository root and open `/tests/renderer.html`. Its visible PASS status confirms all five world caches render and the seven sprite assets load. The test does not alter campaign saves. Physical-device thermal and battery testing remains outstanding.
