@@ -27,3 +27,9 @@ node tests/campaign.cjs
 ```
 
 Tests validate all 500 layout definitions and safe spawns, all five objective completion conditions, rewards/stars, reward duplication protection, purchases and upgrades, insufficient funds, upgrade caps, world unlock progress, game over, and saved progression using an isolated browser mock. Browser QA covers garage purchasing, reload persistence, and portrait layout. Level layouts are generated from fixed seeds; they are not 500 individually hand-authored maps.
+
+## Cinematic edition
+
+Google Flow artwork now supplies the main menu, five vehicle portraits, and five world backdrops. See `docs/ART.md` for provenance. Shared image atlases keep the total artwork payload near 505 KiB. Menu screens skip canvas painting.
+
+Gameplay adds nitro (tap the button or press Shift/N), charged by drifting, near misses, and wrecks. Initial charge allows one boost; boosts have a cooldown and require 40 charge. Wreck/near-miss chains multiply score up to ×5 and expire after five seconds or on a damaging hit. Drift trails reuse 140 marks. Skilled driving adds a capped credit bonus to the result. No entry fee, paid boost, or energy timer is introduced.
