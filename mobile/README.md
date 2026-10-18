@@ -40,3 +40,7 @@ References: [Android local WebView content](https://developer.android.com/develo
 Shortcut: with an emulator already running, execute `./mobile/run-android.sh` from the repository root. Set `ANDROID_SERIAL` to target a different device explicitly; the default is emulator-5554.
 
 Validated here: Android debug build and JVM shared-policy tests pass; APK installed and playable in BuzzyPhone (Android 15) using the app's WebView, with no Chrome address bar. The emulator briefly displayed a System UI stall during startup; clearing that dialog restored normal gameplay. iOS project/plist syntax passes `plutil`, but iOS compilation and runtime remain unverified without full Xcode.
+
+### Convoy Escape alpha
+
+The web bundle now includes the live co-op connection UI. Android declares INTERNET for a user-selected WSS match endpoint; cleartext and mixed content remain disabled. The static hosted Site does not run the Node match server. See [Convoy Escape](../docs/CONVOY_ESCAPE.md) for local play, hosting and current testing limits. The offline campaign remains available without a server.

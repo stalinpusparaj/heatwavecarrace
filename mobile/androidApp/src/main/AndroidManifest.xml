@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application android:label="RUNROAD" android:icon="@drawable/ic_heatwave"
         android:theme="@style/Theme.Heatwave" android:hardwareAccelerated="true"
         android:allowBackup="true" android:usesCleartextTraffic="false" android:supportsRtl="true">

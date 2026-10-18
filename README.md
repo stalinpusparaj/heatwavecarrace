@@ -55,3 +55,7 @@ Run `node tests/performance.cjs` for profile/adaptation tests, alongside `node t
 ## Native KMP mobile app
 
 The `mobile/` project wraps the bundled game in a native Android WebView, with shared Kotlin Multiplatform shell logic and an iOS WKWebView host scaffold. Android runs offline without Chrome, a local web server, or hosted-site sign-in. See [mobile/README.md](mobile/README.md) for build, install, lifecycle, storage, and iOS verification details.
+
+## Convoy Escape (private live alpha)
+
+Run `npm ci --prefix server --ignore-scripts` then `node server/index.mjs`. Open `http://127.0.0.1:4180/` in two browser clients and choose Play with Friends. See [the live co-op guide](docs/CONVOY_ESCAPE.md) for hosting, reconnect behavior and validation limits. The public static Site has the client UI; remote play still requires a deployed WSS match service.
