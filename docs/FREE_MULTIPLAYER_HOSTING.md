@@ -35,4 +35,14 @@ The game already has an authoritative two-player server and tests. Colyseus is o
 - [Colyseus framework/cloud pricing](https://colyseus.io/pricing/)
 - [Cloudflare Durable Objects pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/)
 
-Status: deployment configuration prepared; no Render account connection or live match-server deployment has been verified.
+## Verified live deployment
+
+Deployed 18 October 2026 using the signed-in Render Dashboard, selected workspace My Workspace. Service `srv-dbacp5gn74is739io5s0`, deploy `dep-dbacp60n74is739io78g`, server source commit `2030d9ea0281b21747477fd1123857ac779cf933`. Render reported Live on Free compute in Singapore. No database, disk or paid plan was added; automatic deployment is off.
+
+Returned HTTPS origin: https://runroad-convoy-alpha.onrender.com
+
+Default game endpoint: wss://runroad-convoy-alpha.onrender.com/convoy
+
+`scripts/verify-convoy-live.mjs` passed against this deployment: health and approved-origin CORS, backend-only asset isolation, two actual WSS connections (web and Android origins), ready/countdown, shared server positions/police, steering movement and token-bound reconnect. The game now uses this verified endpoint by default outside localhost, with an optional connection-settings disclosure.
+
+Run `node scripts/verify-convoy-live.mjs https://runroad-convoy-alpha.onrender.com` to repeat the controlled smoke test. It creates a short-lived test room and closes the sockets; it does not print seat tokens or require payment. This is not a physical-device or sustained-capacity certification.

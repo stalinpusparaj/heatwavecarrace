@@ -1,6 +1,6 @@
 # Convoy Escape — live private alpha
 
-Status: implemented and tested locally with two real browser clients and two WebSocket test clients. The hosted game includes the connection UI, but **there is no publicly deployed match-server URL yet**. The existing owner-private static Site cannot execute the new Node server. No new hosting account, subscription or paid server has been activated.
+Status: implemented and tested locally with two real browser clients and two WebSocket test clients. The hosted game defaults to the verified free Render match service at `wss://runroad-convoy-alpha.onrender.com/convoy`. Two real WSS clients passed a live smoke test. See [free hosting status](FREE_MULTIPLAYER_HOSTING.md) for service/deploy IDs, source revision and limitations. The owner-private static Site remains separate from the backend; no paid plan, database or disk was added.
 
 ## Play locally
 

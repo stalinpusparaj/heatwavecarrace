@@ -1,6 +1,7 @@
 'use strict';
 // Private, real-time alpha. The server owns simulation; the client sends steering only.
 const V=(()=>{
+const DEFAULT_SERVER='wss://runroad-convoy-alpha.onrender.com/convoy';
 let socket=null,active=false,id=0,room='',token='',endpoint='',latest=null,previous=null;
 let received=0,raf=null,sendAt=0,paintAt=0,hudAt=0,seq=0,boost=false,rescue=false;
 let closing=false,retryTimer=null,retryUntil=0,finished=false,started=false,warming=false,attempt=0,warmAbort=null;
@@ -16,9 +17,9 @@ function validateEndpoint(value){
 function show(){
   if(active)return;
   const local=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
-  $v('convoyEndpoint').value=local?`${location.protocol==='https:'?'wss':'ws'}://${location.host}/convoy`:'';
+  $v('convoyEndpoint').value=local?`${location.protocol==='https:'?'wss':'ws'}://${location.host}/convoy`:DEFAULT_SERVER;
   $v('convoyCode').value='';
-  status(local?'Create a room and send its code to one friend. Both drivers must tap Ready.':'Private alpha: enter your deployed match server’s wss:// address. The static game site does not host matches yet.');
+  status('Create a room and send its code to one friend. Both drivers must tap Ready. The free server may take about a minute to wake.');
   $v('convoyDialog').showModal();
 }
 async function connect(type){
@@ -175,7 +176,7 @@ function leave(){
 }
 function init(){
   const button=$('rivalsButton');button.textContent='↗ PLAY WITH FRIENDS';button.onclick=show;
-  const d=document.createElement('dialog');d.id='convoyDialog';d.innerHTML=`<form method="dialog"><button aria-label="Close Convoy Escape" class="convoy-close">✕</button></form><div class="eyebrow">NOBODY DRIVES HOME ALONE</div><h2>CONVOY <em>ESCAPE.</em></h2><p>Two real drivers. Two supply caches. One way home.<br>Distract pursuit and hold RESCUE near a stalled friend.</p><label for="convoyEndpoint">MATCH SERVER</label><input id="convoyEndpoint" placeholder="wss://your-match-server/convoy" spellcheck="false" type="url"><label for="convoyCode">FRIEND’S ROOM CODE</label><input id="convoyCode" placeholder="Eight characters" maxlength="8" autocomplete="off"><div class="convoy-buttons"><button id="convoyCreate" class="primary">CREATE ROOM ↗</button><button id="convoyJoin" class="secondary">JOIN FRIEND</button></div><p id="convoyStatus" role="status"></p><button id="convoyGhost" class="secondary">RIVAL ROUTES · RECORDED GHOSTS ↗</button><small>Live alpha needs a separately running match server. Ghost challenges remain available offline. Equal starter cars; no purchases or campaign rewards.</small>`;document.body.append(d);
+  const d=document.createElement('dialog');d.id='convoyDialog';d.innerHTML=`<form method="dialog"><button aria-label="Close Convoy Escape" class="convoy-close">✕</button></form><div class="eyebrow">NOBODY DRIVES HOME ALONE</div><h2>CONVOY <em>ESCAPE.</em></h2><p>Two real drivers. Two supply caches. One way home.<br>Distract pursuit and hold RESCUE near a stalled friend.</p><details class="convoy-connection"><summary>Connection settings</summary><label for="convoyEndpoint">MATCH SERVER</label><input id="convoyEndpoint" placeholder="wss://your-match-server/convoy" spellcheck="false" type="url"></details><label for="convoyCode">FRIEND’S ROOM CODE</label><input id="convoyCode" placeholder="Eight characters" maxlength="8" autocomplete="off"><div class="convoy-buttons"><button id="convoyCreate" class="primary">CREATE ROOM ↗</button><button id="convoyJoin" class="secondary">JOIN FRIEND</button></div><p id="convoyStatus" role="status"></p><button id="convoyGhost" class="secondary">RIVAL ROUTES · RECORDED GHOSTS ↗</button><small>Live co-op on our free match server. Equal starter cars; no purchases or campaign rewards. Ghost challenges remain available offline.</small>`;document.body.append(d);
   const lobby=document.createElement('section');lobby.id='convoyLobby';lobby.hidden=true;lobby.innerHTML='<small>PRIVATE ROOM · SEND THIS CODE</small><strong id="convoyRoomLabel"></strong><p id="convoyLobbyText"></p><button id="convoyReady" class="primary">READY TO DRIVE</button><button id="convoyLeave" class="secondary">LEAVE CONVOY</button>';document.body.append(lobby);
   const r=document.createElement('button');r.id='convoyRescue';r.hidden=true;r.textContent='HOLD RESCUE';r.onpointerdown=e=>{r.setPointerCapture(e.pointerId);rescue=true};r.onpointerup=r.onpointercancel=()=>{rescue=false};document.body.append(r);
   d.addEventListener('close',()=>{if(!active){attempt++;warming=false;warmAbort?.abort();$v('convoyCreate').disabled=$v('convoyJoin').disabled=false;closing=true;socket?.close();socket=null}});
