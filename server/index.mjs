@@ -1,4 +1,6 @@
 import http from 'node:http';
+import { createCrewStore } from './crew-store.mjs';
+import { createCrewApi } from './crew-api.mjs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,10 +9,12 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createMatch, addPlayer, setInput, ready, step, snapshot, RULES, STEP } from './simulation.mjs';
 
 const root = fileURLToPath(new URL('../dist/', import.meta.url));
-export function createConvoyServer({ origins = [], maxRooms = 64, now = () => performance.now(), serveGame = true } = {}) {
+export function createConvoyServer({ origins = [], maxRooms = 64, now = () => performance.now(), serveGame = true, crewStore = null } = {}) {
   const rooms = new Map(), addresses = new Map();
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
+  const crewApi = crewStore ? createCrewApi({ store: crewStore, origins }) : null;
   const server = http.createServer(async (req, res) => {
+    if (crewApi && await crewApi(req, res)) return;
     if (req.url === '/health') {
       const origin = req.headers.origin;
       const allowed = origin && (origins.includes(origin) || origins.length === 0 && origin === `http://${req.headers.host}`);
@@ -135,7 +139,9 @@ export function createConvoyServer({ origins = [], maxRooms = 64, now = () => pe
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT || 4180), host = process.env.HOST || '127.0.0.1';
   const requestedRooms = Number(process.env.MAX_ROOMS || 64);
-  const app = createConvoyServer({ origins: (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean),
+  if (!!process.env.SUPABASE_URL !== !!process.env.SUPABASE_SECRET_KEY) throw new Error('Both crew database settings are required');
+  const crewStore = process.env.SUPABASE_URL ? createCrewStore({ url: process.env.SUPABASE_URL, secretKey: process.env.SUPABASE_SECRET_KEY }) : null;
+  const app = createConvoyServer({ crewStore, origins: (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean),
     maxRooms: Number.isInteger(requestedRooms) ? Math.max(1, Math.min(64, requestedRooms)) : 8,
     serveGame: process.env.SERVE_GAME !== 'false' });
   app.server.listen(port, host, () => console.log(`RUNROAD Convoy Escape: http://${host}:${port}`));

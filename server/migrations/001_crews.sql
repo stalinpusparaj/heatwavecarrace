@@ -24,7 +24,7 @@ create table public.runroad_crew_results (
 alter table public.runroad_crews enable row level security;
 alter table public.runroad_crew_members enable row level security;
 alter table public.runroad_crew_results enable row level security;
-revoke all on public.runroad_crews, public.runroad_crew_members, public.runroad_crew_results from anon, authenticated;
+revoke all on public.runroad_crews, public.runroad_crew_members, public.runroad_crew_results from public, anon, authenticated;
 -- At most one win per crew per match, including two drivers in the same crew.
 -- Membership is resolved in this transaction, never supplied by the browser.
 create function public.runroad_record_crew_win(p_match text, p_accounts uuid[], p_rescues integer)
