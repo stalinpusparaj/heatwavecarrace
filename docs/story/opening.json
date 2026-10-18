@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "status": "proposal-not-wired-to-runtime",
+  "title": "Heatwave: The Road Home",
+  "cast": {
+    "mara": { "name": "Mara", "role": "Driver and mechanic" },
+    "jun": { "name": "Jun", "role": "Mara's younger brother, on the garage radio" }
+  },
+  "scenes": [
+    {
+      "id": "desert_intro",
+      "trigger": { "world": 0, "level": 1, "when": "beforeFirstAttempt" },
+      "skippable": true,
+      "replayOnRetry": false,
+      "lines": [
+        { "speaker": "jun", "text": "You came back." },
+        { "speaker": "mara", "text": "Your message said Dad was missing." },
+        { "speaker": "jun", "text": "He left the orange car for you. Said you'd know how to finish it." },
+        { "speaker": "mara", "text": "He always thought I would." }
+      ]
+    },
+    {
+      "id": "first_pursuit",
+      "trigger": { "world": 0, "level": 1, "when": "firstPoliceSpawn" },
+      "presentation": "caption-during-play",
+      "lines": [
+        { "speaker": "jun", "text": "That alert is for Dad's car. Mara, don't stop." }
+      ]
+    },
+    {
+      "id": "key_tag",
+      "trigger": { "world": 0, "level": 1, "when": "firstClear" },
+      "skippable": true,
+      "replayOnRetry": false,
+      "lines": [
+        { "speaker": "mara", "text": "My old key tag is still here." },
+        { "speaker": "jun", "text": "Dad never changed the lock." },
+        { "speaker": "mara", "text": "Okay. Tell me which road he took." }
+      ],
+      "earnedReward": { "type": "cosmetic", "id": "livery.homeward_stripe" }
+    }
+  ]
+}
