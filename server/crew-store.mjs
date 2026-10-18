@@ -14,7 +14,7 @@ export function createCrewStore({ url, secretKey, fetchImpl = fetch }) {
     let res;
     try {
       res = await fetchImpl(new URL(route, base), { ...options, redirect: 'error',
-        headers: { apikey: secretKey, ...(auth ? { Authorization: `Bearer ${auth}` } : {}), 'Content-Type': 'application/json' },
+        headers: { apikey: secretKey, ...(auth ? { Authorization: `Bearer ${auth}` } : secretKey.startsWith('eyJ') ? { Authorization: `Bearer ${secretKey}` } : {}), 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(7000) });
     } catch { throw new CrewError(503, 'Garage is temporarily unavailable. Try again.'); }
     if (!res.ok) {

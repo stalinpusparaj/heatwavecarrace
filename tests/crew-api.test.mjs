@@ -86,3 +86,10 @@ test('crew routes are absent without configuration; configured routes rate-limit
     assert.equal(checks,20);
   } finally {await app.close();}
 });
+
+test('existing legacy server keys use the server bearer for RPC and the player bearer for Auth',async()=>{
+ const calls=[];const store=createCrewStore({url:'https://database.example',secretKey:'eyJ_SERVER_TEST_ONLY',fetchImpl:async(url,opts)=>{calls.push(opts);return json(url.pathname==='/auth/v1/user'?{id,email_confirmed_at:'yes',is_anonymous:false}:null);}});
+ await store.get(id);assert.equal(calls[0].headers.Authorization,'Bearer eyJ_SERVER_TEST_ONLY');
+ await store.authenticate('player.token');assert.equal(calls[1].headers.Authorization,'Bearer player.token');
+ assert.equal(calls[1].headers.apikey,'eyJ_SERVER_TEST_ONLY');
+});
