@@ -45,3 +45,9 @@ node --check dist/renderer.js
 ```
 
 For the browser renderer test, serve the repository root and open `/tests/renderer.html`. Its visible PASS status confirms all five world caches render and the seven sprite assets load. The test does not alter campaign saves. Physical-device thermal and battery testing remains outstanding.
+
+## Adaptive mobile optimization
+
+Use the **Auto / Eco / Balanced / High** graphics selector in the top-right corner. Auto adapts detail to sustained frame performance; Eco caps rendering at 30 FPS, while Balanced/High target 60. Canvas pixel budgets prevent excessive GPU work on high-DPI and high-refresh phones. Menus release the scene buffers, and inactive screens stop the animation loop. Physics and difficulty remain identical across quality modes. Fonts are bundled locally, and menu images use smaller WebP assets.
+
+Run `node tests/performance.cjs` for profile/adaptation tests, alongside `node tests/campaign.cjs` for gameplay and frame-cap checks. See `docs/PERFORMANCE.md` for budgets, measured file sizes, and verification limits.
