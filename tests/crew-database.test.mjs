@@ -14,6 +14,8 @@ test('crew migrations and transactions execute in PostgreSQL', async t => {
     for (const id of ids) await db.query('insert into auth.users values($1)',[id]);
     for (const file of ['001_crews.sql','002_crew_membership.sql'])
       await db.exec(await readFile(new URL('../server/migrations/'+file,import.meta.url),'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/20261018152438_runroad_invite_crew_index.sql',import.meta.url),'utf8'));
+    assert.equal((await db.query("select count(*)::int as n from pg_indexes where indexname = 'runroad_crew_invites_crew'")).rows[0].n,1);
     await db.exec('set role service_role');
     let crew;
     await t.test('create is atomic and one account cannot create two crews', async () => {

@@ -1,6 +1,6 @@
 # Crews — backend integration (not live)
 
-The live game still offers Rival Routes and two-player Convoy Escape. Crews are not exposed in the UI and do not currently save progress.
+The live game still offers Rival Routes and two-player Convoy Escape. The hosted crew database is provisioned and verified, but Crews are not exposed in the UI and the match service is not yet configured to save progress.
 
 The proposed first release restores Mara and Jun's community garage through successful Convoy escapes: lights at 5 wins, open doors at 15, a welcoming home at 30. These are shared cosmetic/story milestones, with no handling, speed or rescue advantages. Eight members per crew is the initial target; four-player live matches remain a later performance milestone.
 
@@ -16,7 +16,7 @@ The proposed first release restores Mara and Jun's community garage through succ
 
 ## API and configuration
 
-The API is absent by default. Set both `SUPABASE_URL` (the project's HTTPS origin) and `SUPABASE_SECRET_KEY` in the backend host's secret environment, after applying both migrations. Partial configuration fails startup. Do not place these values in `dist`, Android assets, Git or share links. No production configuration was added in this change.
+The API is absent by default. Set both `SUPABASE_URL` (the project's HTTPS origin) and `SUPABASE_SECRET_KEY` in the backend host's secret environment, after applying both migrations. Partial configuration fails startup. Do not place these values in `dist`, Android assets, Git or share links. The hosted database exists, but the Render secret environment has not been configured and these routes remain disabled in the deployed match service.
 
 Every request needs an allowed `Origin` and `Authorization: Bearer <user access token>`. POST requests require `application/json` and accept at most 512 bytes. Responses are not cached.
 
@@ -36,7 +36,7 @@ Run `npm ci --prefix server --ignore-scripts`, then `npm test --prefix server`. 
 
 ## Required before release
 
-Connect Supabase and select/create an eligible free project without adding paid resources. Confirm current free-plan limits during provisioning. Apply both migrations to a development project and verify Auth/Data API behavior, including concurrent joins and duplicate submissions through independent database connections.
+Supabase is connected and the RUNROAD project has been created in the existing Free organization. The migrations are applied. Still verify Auth/Data API behavior and concurrent joins/duplicate submissions through independent connections before exposing the feature.
 
 Implement account sign-in for web and Android; bind authenticated identities to WebSocket seats. A room code or reconnect token is not an account. The backend endpoints are prepared; connect them to the client only after provider validation. Android must explicitly allow the new HTTPS routes through its WebView request filter. Do not expose database service credentials in the browser.
 
@@ -45,3 +45,16 @@ Wire authoritative terminal results to a durable retry/outbox mechanism and the 
 Render Free memory and local files are not durable storage. Do not enable persistent crew rewards against either. Existing local campaign progress remains independent.
 
 Implementation references: [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys), [server verification of user tokens](https://supabase.com/docs/guides/auth/jwts), and [database function permissions](https://supabase.com/docs/guides/database/functions).
+
+## Hosted database — 18 October 2026
+
+- Project: **RUNROAD**, ID `rajkcmbdsnxdtajchuuy`, region `ap-southeast-1` (Singapore).
+- Organization: `stalinpusparaj's Org`, ID `ygkqwgpvoighvvpqxysi`, confirmed Free. No plan upgrade or paid branch was requested.
+- [Project dashboard](https://supabase.com/dashboard/project/rajkcmbdsnxdtajchuuy).
+- Status after provisioning: `ACTIVE_HEALTHY`, PostgreSQL 17.
+- Applied migrations: `20261018152149_runroad_crew_progress`, `20261018152223_runroad_crew_membership`, and `runroad_invite_crew_index`. Initial sources are the two files in `server/migrations`; the CLI-generated index source is `supabase/migrations/20261018152438_runroad_invite_crew_index.sql`. This checkout is not yet a complete linked Supabase CLI migration history; do not blindly run `db push`.
+- Hosted transactional verification passed create, join, eight-member cap, shared rewards, duplicate reward rejection and invitation revocation after departure. All synthetic accounts, crews and results were rolled back.
+- Catalog checks confirmed RLS on all four tables, no table privileges for `anon`/`authenticated`, and server-only execution of all six functions.
+- Security advisor has only informational [RLS enabled without policies](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) findings. This is deliberate: access is server-only and browser grants are revoked.
+- The advisor's missing invitation foreign-key index was added. Its current [unused-index information](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index) is expected before live traffic.
+- The game, Render backend configuration, account screens and Android package were not deployed or changed by database provisioning. Existing projects in this organization were not modified.

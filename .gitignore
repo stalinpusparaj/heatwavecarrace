@@ -7,3 +7,5 @@ mobile/.idea/
 *.apk
 
 server/node_modules/
+
+supabase/.temp/
