@@ -7,11 +7,18 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createMatch, addPlayer, setInput, ready, step, snapshot, RULES, STEP } from './simulation.mjs';
 
 const root = fileURLToPath(new URL('../dist/', import.meta.url));
-export function createConvoyServer({ origins = [], maxRooms = 64, now = () => performance.now() } = {}) {
+export function createConvoyServer({ origins = [], maxRooms = 64, now = () => performance.now(), serveGame = true } = {}) {
   const rooms = new Map(), addresses = new Map();
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
   const server = http.createServer(async (req, res) => {
-    if (req.url === '/health') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ status: 'ok', rules: RULES })); return; }
+    if (req.url === '/health') {
+      const origin = req.headers.origin;
+      const allowed = origin && (origins.includes(origin) || origins.length === 0 && origin === `http://${req.headers.host}`);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store',
+        'Vary': 'Origin', ...(allowed ? { 'Access-Control-Allow-Origin': origin } : {}) });
+      res.end(JSON.stringify({ status: 'ok', rules: RULES })); return;
+    }
+    if (!serveGame) { res.writeHead(404); res.end('Match server only'); return; }
     if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); res.end(); return; }
     try {
       const route = decodeURIComponent(new URL(req.url, 'http://local').pathname);
@@ -127,7 +134,10 @@ export function createConvoyServer({ origins = [], maxRooms = 64, now = () => pe
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT || 4180), host = process.env.HOST || '127.0.0.1';
-  const app = createConvoyServer({ origins: (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean) });
+  const requestedRooms = Number(process.env.MAX_ROOMS || 64);
+  const app = createConvoyServer({ origins: (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean),
+    maxRooms: Number.isInteger(requestedRooms) ? Math.max(1, Math.min(64, requestedRooms)) : 8,
+    serveGame: process.env.SERVE_GAME !== 'false' });
   app.server.listen(port, host, () => console.log(`RUNROAD Convoy Escape: http://${host}:${port}`));
   process.on('SIGTERM', () => app.close()); process.on('SIGINT', () => app.close());
 }

@@ -3,7 +3,7 @@
 const V=(()=>{
 let socket=null,active=false,id=0,room='',token='',endpoint='',latest=null,previous=null;
 let received=0,raf=null,sendAt=0,paintAt=0,hudAt=0,seq=0,boost=false,rescue=false;
-let closing=false,retryTimer=null,retryUntil=0,finished=false,started=false;
+let closing=false,retryTimer=null,retryUntil=0,finished=false,started=false,warming=false,attempt=0,warmAbort=null;
 const $v=id=>document.getElementById(id);
 function status(text){$v('convoyStatus').textContent=text}
 function send(data){if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(data))}
@@ -21,15 +21,38 @@ function show(){
   status(local?'Create a room and send its code to one friend. Both drivers must tap Ready.':'Private alpha: enter your deployed match server’s wss:// address. The static game site does not host matches yet.');
   $v('convoyDialog').showModal();
 }
-function connect(type){
-  if(socket&&socket.readyState<2)return;
+async function connect(type){
+  if(warming||socket&&socket.readyState<2)return;
+  const request=++attempt;
   try{
     endpoint=validateEndpoint($v('convoyEndpoint').value.trim());
     room=$v('convoyCode').value.trim().toUpperCase();
     if(type==='join'&&!/^[0-9A-F]{8}$/.test(room))throw Error('Enter your friend’s eight-character room code.');
     closing=false;finished=false;started=false;seq=0;latest=previous=null;token='';retryUntil=0;
-    openSocket(type);status('Connecting to the match server…');
-  }catch(e){status(e.message)}
+    warming=true;$v('convoyCreate').disabled=$v('convoyJoin').disabled=true;
+    await warmServer(endpoint,request);
+    if(request!==attempt)return;
+    openSocket(type);status('Server ready · connecting both drivers…');
+  }catch(e){if(request===attempt)status(e.message)}
+  finally{if(request===attempt){warming=false;$v('convoyCreate').disabled=$v('convoyJoin').disabled=false}}
+}
+async function warmServer(value,request){
+  const health=new URL(value);health.protocol=health.protocol==='wss:'?'https:':'http:';health.pathname='/health';
+  const began=performance.now();
+  while(request===attempt&&performance.now()-began<90000){
+    status('Waking the free match server… '+Math.floor((performance.now()-began)/1000)+'s. The first connection can take about a minute.');
+    const controller=new AbortController();warmAbort=controller;const timer=setTimeout(()=>controller.abort(),7000);
+    try{
+      const response=await fetch(health.href,{signal:controller.signal,credentials:'omit',cache:'no-store'});
+      if(response.ok){const data=await response.json();if(data.status==='ok'){
+        if(data.rules!==1)throw Error('VERSION_MISMATCH');return;
+      }}
+    }catch(e){if(e.message==='VERSION_MISMATCH')throw Error('Server version mismatch. Reload the game or update the server.');}
+    finally{clearTimeout(timer);if(warmAbort===controller)warmAbort=null}
+    if(request!==attempt)return;
+    await new Promise(resolve=>setTimeout(resolve,2000));
+  }
+  if(request===attempt)throw Error('Server did not wake up. Check its deployment, allowed game origin and free-tier limits, then try again.');
 }
 function openSocket(type){
   const ws=new WebSocket(endpoint);socket=ws;
@@ -155,7 +178,7 @@ function init(){
   const d=document.createElement('dialog');d.id='convoyDialog';d.innerHTML=`<form method="dialog"><button aria-label="Close Convoy Escape" class="convoy-close">✕</button></form><div class="eyebrow">NOBODY DRIVES HOME ALONE</div><h2>CONVOY <em>ESCAPE.</em></h2><p>Two real drivers. Two supply caches. One way home.<br>Distract pursuit and hold RESCUE near a stalled friend.</p><label for="convoyEndpoint">MATCH SERVER</label><input id="convoyEndpoint" placeholder="wss://your-match-server/convoy" spellcheck="false" type="url"><label for="convoyCode">FRIEND’S ROOM CODE</label><input id="convoyCode" placeholder="Eight characters" maxlength="8" autocomplete="off"><div class="convoy-buttons"><button id="convoyCreate" class="primary">CREATE ROOM ↗</button><button id="convoyJoin" class="secondary">JOIN FRIEND</button></div><p id="convoyStatus" role="status"></p><button id="convoyGhost" class="secondary">RIVAL ROUTES · RECORDED GHOSTS ↗</button><small>Live alpha needs a separately running match server. Ghost challenges remain available offline. Equal starter cars; no purchases or campaign rewards.</small>`;document.body.append(d);
   const lobby=document.createElement('section');lobby.id='convoyLobby';lobby.hidden=true;lobby.innerHTML='<small>PRIVATE ROOM · SEND THIS CODE</small><strong id="convoyRoomLabel"></strong><p id="convoyLobbyText"></p><button id="convoyReady" class="primary">READY TO DRIVE</button><button id="convoyLeave" class="secondary">LEAVE CONVOY</button>';document.body.append(lobby);
   const r=document.createElement('button');r.id='convoyRescue';r.hidden=true;r.textContent='HOLD RESCUE';r.onpointerdown=e=>{r.setPointerCapture(e.pointerId);rescue=true};r.onpointerup=r.onpointercancel=()=>{rescue=false};document.body.append(r);
-  d.addEventListener('close',()=>{if(!active){closing=true;socket?.close();socket=null}});
+  d.addEventListener('close',()=>{if(!active){attempt++;warming=false;warmAbort?.abort();$v('convoyCreate').disabled=$v('convoyJoin').disabled=false;closing=true;socket?.close();socket=null}});
   $('convoyCreate').onclick=()=>connect('create');$('convoyJoin').onclick=()=>connect('join');
   $('convoyGhost').onclick=()=>{d.close();R.show()};$('convoyReady').onclick=()=>{send({type:'ready'});$('convoyReady').disabled=true;$('convoyReady').textContent='WAITING FOR YOUR FRIEND'};
   $('convoyLeave').onclick=()=>C.open('home');

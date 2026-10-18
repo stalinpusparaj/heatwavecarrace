@@ -29,3 +29,14 @@ test('rejects foreign origins and incompatible protocol',async()=>{
  const url=`ws://127.0.0.1:${app.server.address().port}/convoy`;
  try{await assert.rejects(client(url,'http://evil.local'),/403/);const c=await client(url,'http://allowed.local');c.send({type:'create',rules:99});assert.match((await waitFor(()=>c.messages.find(m=>m.type==='error'))).message,/version/);c.ws.terminate()}finally{await app.close()}
 });
+test('free-host health supports only approved game origins and serves no private game files',async()=>{
+ const app=createConvoyServer({origins:['https://game.example'],serveGame:false,maxRooms:1});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
+ const base=`http://127.0.0.1:${app.server.address().port}`;
+ try{
+  const ok=await fetch(base+'/health',{headers:{Origin:'https://game.example'}});assert.equal(ok.headers.get('access-control-allow-origin'),'https://game.example');assert.equal((await ok.json()).status,'ok');
+  const bad=await fetch(base+'/health',{headers:{Origin:'https://evil.example'}});assert.equal(bad.headers.get('access-control-allow-origin'),null);
+  assert.equal((await fetch(base+'/index.html')).status,404);assert.equal((await fetch(base+'/assets/hero.webp')).status,404);
+  const a=await client(base.replace('http:','ws:')+'/convoy','https://game.example');a.send({type:'create',rules:1});await waitFor(()=>a.messages.find(m=>m.type==='welcome'));
+  const b=await client(base.replace('http:','ws:')+'/convoy','https://game.example');b.send({type:'create',rules:1});assert.match((await waitFor(()=>b.messages.find(m=>m.type==='error'))).message,/full/);a.ws.terminate();b.ws.terminate();
+ }finally{await app.close()}
+});

@@ -1,0 +1,23 @@
+# One free, ephemeral alpha service. Do not add a database or paid disk.
+services:
+  - type: web
+    name: runroad-convoy-alpha
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: npm ci --prefix server --omit=dev --ignore-scripts
+    startCommand: node server/index.mjs
+    healthCheckPath: /health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: MAX_ROOMS
+        value: "8"
+      - key: SERVE_GAME
+        value: "false"
+      - key: ALLOWED_ORIGINS
+        value: https://heatwave-desert-run.stalinpusparaj47.chatgpt.site,https://appassets.androidplatform.net
