@@ -1,6 +1,6 @@
-# Crews — backend integration (not live)
+# Crews — game integration (activation pending)
 
-The live game still offers Rival Routes and two-player Convoy Escape. The hosted crew database is provisioned and verified, but Crews are not exposed in the UI and the match service is not yet configured to save progress.
+The live game still offers Rival Routes and two-player Convoy Escape. The hosted crew database is provisioned and verified, but The crew garage and sign-in screens are implemented. The deployed match service still needs its server-only database configuration before account-backed progress can be enabled.
 
 The proposed first release restores Mara and Jun's community garage through successful Convoy escapes: lights at 5 wins, open doors at 15, a welcoming home at 30. These are shared cosmetic/story milestones, with no handling, speed or rescue advantages. Eight members per crew is the initial target; four-player live matches remain a later performance milestone.
 
@@ -57,4 +57,26 @@ Implementation references: [Supabase API keys](https://supabase.com/docs/guides/
 - Catalog checks confirmed RLS on all four tables, no table privileges for `anon`/`authenticated`, and server-only execution of all six functions.
 - Security advisor has only informational [RLS enabled without policies](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) findings. This is deliberate: access is server-only and browser grants are revoked.
 - The advisor's missing invitation foreign-key index was added. Its current [unused-index information](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index) is expected before live traffic.
-- The game, Render backend configuration, account screens and Android package were not deployed or changed by database provisioning. Existing projects in this organization were not modified.
+- Database provisioning did not change the game or Render credentials. Subsequent game integration is described below. Existing projects in this organization were not modified.
+
+## Game and account integration — 19 October 2026
+
+`dist/crews.js` and `dist/crews.css` add the Community Crew Garage to the header and friend menu. The garage shows eight membership places, shared escape/supply/rescue counts and the 5/15/30-win restoration stages. Forms support create, join, invite, refresh, explicit departure and sign-out. Names and account data are HTML escaped. The garage art is CSS; no image or SDK download is added.
+
+Sign-in uses Supabase's existing default email links with the public project key. The dashboard currently requires custom SMTP or a paid upgrade to customize templates, so the UI does not promise numeric OTP emails. Players can paste the private verification link into the game; it is accepted only for this project's HTTPS verification endpoint and email/signup/magiclink types. Pasting a link does not navigate to its redirect target. Web sign-in also consumes the verified return session from a URL fragment and immediately removes the fragment from browser history. Sessions and refresh tokens stay in memory for the open tab; refreshing/closing the page requires a new sign-in. Logout attempts to revoke this refresh session and always clears local memory.
+
+The default mail service is suitable only for approved alpha test addresses and limited delivery. Custom SMTP and representative delivery testing remain necessary before inviting public players. No test emails were sent automatically. The email flow cannot be called verified end-to-end until a person receives and uses a link.
+
+The sign-in button first checks `/health` for `crews: true`; an unconfigured backend does not trigger an email request. Server settings to activate are `SUPABASE_URL=https://rajkcmbdsnxdtajchuuy.supabase.co` and a server-only `SUPABASE_SECRET_KEY`. The existing secret must be stored in Render's secret environment only. Web redirects should be configured to the owner-private game URL. No key is embedded in the APK or Site.
+
+WebSocket create/join messages optionally include a user access token, restricted by the client to the trusted match origin. The server verifies it with Auth, binds the verified account to the seat, and rejects a second seat with the same account. Guest drivers remain supported. Reconnect uses the existing private seat token. Initial handshake frames allow up to 12 KB for JWTs; subsequent messages remain capped at 1 KB.
+
+An authoritative two-account victory captures an immutable terminal simulation copy, uses a separate random 128-bit match ID, and calls the server-only reward transaction. The final screen shows pending until the database acknowledges. Positive updates show saved; zero updates show checked (an already processed match or changed membership can produce zero). Guest, incomplete and lost matches grant no crew contribution. No campaign credits are granted. Membership is resolved at result transaction time, not locked for the entire race.
+
+Saving retries up to five times in the running server, with pending rooms retained up to three minutes. **This retry queue is memory-only**, not a durable outbox. A server restart before the database accepts the result can lose an unconfirmed contribution. The UI never labels such a result saved. Completed database updates survive restarts and are deduplicated on retry. Durable recovery across a backend crash remains a production hardening item.
+
+Android permits only the exact crew routes, the project's selected Auth routes, and health checks through its WebView request filter. Other remote paths and lookalike origins remain blocked. Solo campaign remains offline. The Android debug build and shared JVM checks are required after each asset/allowlist change; a physical-device account flow is still unverified.
+
+Local verification includes small-screen browser inspection, all solo/campaign/ghost checks, 33 crew/multiplayer tests, and Android build/shared tests. The local WebSocket suite uses an injected provider and controlled terminal fixture; it does not claim a real user account or naturally completed live hosted race.
+
+Activation still requires confirmed placement of the Supabase server credential in Render, a backend deployment, redirect configuration and a human email sign-in test. The Site audience remains owner-private.

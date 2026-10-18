@@ -101,7 +101,7 @@ class MainActivity : Activity() {
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
                 if (GameShell.isBundledUrl(request.url.toString())) {
                     loader.shouldInterceptRequest(request.url) ?: blockedResponse()
-                } else if (request.method == "GET" && GameShell.isMatchHealthUrl(request.url.toString())) null
+                } else if (GameShell.isOnlineRequestAllowed(request.url.toString(), request.method)) null
                 else blockedResponse()
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {

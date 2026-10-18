@@ -20,7 +20,7 @@ export function createConvoyServer({ origins = [], maxRooms = 64, now = () => pe
       const allowed = origin && (origins.includes(origin) || origins.length === 0 && origin === `http://${req.headers.host}`);
       res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store',
         'Vary': 'Origin', ...(allowed ? { 'Access-Control-Allow-Origin': origin } : {}) });
-      res.end(JSON.stringify({ status: 'ok', rules: RULES })); return;
+      res.end(JSON.stringify({ status: 'ok', rules: RULES, crews: !!crewStore })); return;
     }
     if (!serveGame) { res.writeHead(404); res.end('Match server only'); return; }
     if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); res.end(); return; }
@@ -33,7 +33,7 @@ export function createConvoyServer({ origins = [], maxRooms = 64, now = () => pe
       res.end(req.method === 'HEAD' ? undefined : bytes);
     } catch { res.writeHead(404); res.end('Not found'); }
   });
-  const wss = new WebSocketServer({ noServer: true, maxPayload: 1024, perMessageDeflate: false });
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 12288, perMessageDeflate: false });
   server.on('upgrade', (req, socket, head) => {
     const origin = req.headers.origin;
     const hostOrigin = `http://${req.headers.host}`;
@@ -52,27 +52,39 @@ export function createConvoyServer({ origins = [], maxRooms = 64, now = () => pe
   wss.on('connection', (ws, req) => {
     const address = req.socket.remoteAddress;
     addresses.set(address, (addresses.get(address) || 0) + 1);
-    let room, slot, messages = 0, rateStart = now(), bound = false;
+    let room, slot, messages = 0, rateStart = now(), bound = false, binding = false;
     ws.alive = true;
     ws.on('pong', () => { ws.alive = true; });
     ws.on('error', () => {});
-    ws.on('message', data => {
+    ws.on('message', async data => {
       try {
         if (now() - rateStart > 1000) { rateStart = now(); messages = 0; }
+        if (binding) return;
+        if (data.length > (bound ? 1024 : 12288)) { ws.close(1009, 'Message too large'); return; }
         if (++messages > 25) { ws.close(1008, 'Too many messages'); return; }
         const msg = JSON.parse(data.toString());
         if (!msg || Array.isArray(msg)) throw Error('Invalid message.');
         if (!bound) {
           if (msg.rules !== RULES) throw Error('Game version mismatch. Reload both games.');
+          let accountId = null;
+          if (msg.accessToken && ['create','join'].includes(msg.type)) {
+            if (!crewStore) throw Error('Crew service is not enabled yet. Sign out to play as a guest.');
+            binding = true;
+            try { accountId = await crewStore.authenticate(msg.accessToken); }
+            catch { throw Error('Crew sign-in expired or unavailable. Sign in again, or play as a guest.'); }
+            finally { binding = false; }
+            if (ws.readyState !== WebSocket.OPEN) return;
+          }
           if (msg.type === 'create') {
             if (rooms.size >= maxRooms) throw Error('Server is full. Try again later.');
             let code;
             do { code = randomBytes(4).toString('hex').toUpperCase(); } while (rooms.has(code));
-            room = { code, match: createMatch(randomInt(1, 4294967295)), seats: [], created: now(), ended: 0 };
+            room = { code, matchId: randomBytes(16).toString('hex'), reward: { status: 'guest' }, rewardAttempts: 0, rewardNext: 0, rewardBusy: false, match: createMatch(randomInt(1, 4294967295)), seats: [], created: now(), ended: 0 };
             rooms.set(code, room); slot = addPlayer(room.match).id;
           } else if (msg.type === 'join' && /^[A-F0-9]{8}$/.test(msg.code)) {
             room = rooms.get(msg.code);
             if (!room || room.match.phase !== 'lobby' || room.seats.length >= 2) throw Error('Room not found, full or already started.');
+            if (accountId && room.seats.some(s => s.accountId === accountId)) throw Error('Each driver needs a different account for a crew escape.');
             slot = addPlayer(room.match).id;
           } else if (msg.type === 'reconnect' && /^[A-F0-9]{8}$/.test(msg.code) && typeof msg.token === 'string') {
             room = rooms.get(msg.code);
@@ -80,12 +92,12 @@ export function createConvoyServer({ origins = [], maxRooms = 64, now = () => pe
             if (!room || slot === undefined || slot < 0 || room.match.phase === 'lost' || room.match.phase === 'won' || room.match.players[slot].missing > 10) throw Error('Reconnect expired. Create another convoy.');
             room.seats[slot].ws?.close(1000, 'Reconnected elsewhere');
           } else throw Error('Create or join a room first.');
-          const seat = room.seats[slot] || { token: randomBytes(24).toString('hex') };
+          const seat = room.seats[slot] || { token: randomBytes(24).toString('hex'), accountId };
           seat.ws = ws; room.seats[slot] = seat; room.match.players[slot].connected = true;
           room.match.players[slot].missing = 0;
           bound = true;
           send(ws, { type: 'welcome', rules: RULES, code: room.code, id: slot, token: seat.token,
-            obstacles: room.match.obstacles, state: snapshot(room.match) });
+            obstacles: room.match.obstacles, state: snapshot(room.match), crewSignedIn: !!seat.accountId });
           return;
         }
         if (room.seats[slot].ws !== ws) return;
@@ -107,6 +119,16 @@ export function createConvoyServer({ origins = [], maxRooms = 64, now = () => pe
     const authenticateTimer = setTimeout(() => { if (!bound) ws.close(1008, 'Join timeout'); }, 10000);
     authenticateTimer.unref(); ws.on('close', () => clearTimeout(authenticateTimer));
   });
+  async function saveCrewResult(room) {
+    room.rewardBusy = true; room.rewardAttempts++;
+    try {
+      const applied = await crewStore.recordWin(room.matchId, room.rewardMatch, room.seats.map(s => s.accountId));
+      room.reward = { status: applied > 0 ? 'saved' : 'checked' };
+    } catch {
+      room.rewardNext = now() + 5000 * room.rewardAttempts;
+      if (room.rewardAttempts >= 5) room.reward = { status: 'failed' };
+    } finally { room.rewardBusy = false; }
+  }
   let last = now(), accumulator = 0, broadcast = 0;
   const timer = setInterval(() => {
     const current = now(); accumulator += Math.min(.25, (current - last) / 1000); last = current;
@@ -117,12 +139,17 @@ export function createConvoyServer({ origins = [], maxRooms = 64, now = () => pe
     if (current - broadcast < 1000 / 15) return;
     broadcast = current;
     for (const [code, room] of rooms) {
-      if (['won', 'lost'].includes(room.match.phase) && !room.ended) room.ended = current;
-      if (current - room.created > 600000 || room.ended && current - room.ended > 30000) {
+      if (['won', 'lost'].includes(room.match.phase) && !room.ended) {
+        room.ended = current;
+        if (room.match.phase === 'won' && crewStore && room.seats.length === 2 && room.seats.every(s => s.accountId))
+          { room.rewardMatch = structuredClone(room.match); room.reward = { status: 'pending' }; }
+      }
+      if (room.reward.status === 'pending' && !room.rewardBusy && current >= room.rewardNext) void saveCrewResult(room);
+      if (current - room.created > 600000 || room.ended && current - room.ended > (room.reward.status === 'pending' ? 180000 : 30000)) {
         for (const seat of room.seats) seat.ws?.close(1000, 'Room expired');
         rooms.delete(code); continue;
       }
-      const state = { type: 'state', ...snapshot(room.match) };
+      const state = { type: 'state', ...snapshot(room.match), crewReward: room.reward.status };
       for (const seat of room.seats) if (seat.ws) send(seat.ws, state);
     }
   }, 1000 / 30);

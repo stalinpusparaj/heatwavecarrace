@@ -20,7 +20,7 @@ Open `http://127.0.0.1:4180/` in two browser tabs/windows. Choose **Play with Fr
 
 Drag to steer; desktop WASD/arrows and Shift/N for nitro. Standard starter-car stats apply to both drivers. No campaign credits, paid entitlements or persistent ranked rewards are granted. The final result comes from the server.
 
-The radio line from Jun during countdown and the joint success line connect the mode to “Nobody drives home alone.” Full authored story scenes and crews remain separate milestones.
+The radio line from Jun during countdown and the joint success line connect the mode to “Nobody drives home alone.” The community crew garage is implemented with optional verified sign-in; production activation is tracked in [Crews](CREWS.md). Full authored story scenes remain a later milestone.
 
 ## What is authoritative
 
@@ -35,7 +35,7 @@ The client does not run the solo physics loop while connected. Each match has a 
 - Inputs expire after 0.6 seconds, so a dropped or inactive client stops accelerating. A pause overlay sends idle input; backgrounding does not freeze the shared match.
 - The server ends a match if either disconnected driver exceeds the grace period. A network failure grants no ranked penalty or campaign loss.
 - Invalid protocol, foreign Origin, non-finite steering, stale sequence and client-supplied position/HP are rejected or ignored. Frames are capped at 1 KB, input traffic at 25 messages/second, connections at eight per address and active room storage at 64 rooms. Backpressured sockets are terminated; ping/pong detects dead connections.
-- Rooms expire after ten minutes; terminal rooms expire after 30 seconds. State is memory-only: restarting the server ends all matches. There are no accounts, open chat, voice, public queue or persistent crew data.
+- Rooms expire after ten minutes; terminal rooms expire after 30 seconds. State is memory-only: restarting the server ends all matches. There is no open chat, voice or public queue. Optional account-backed crew persistence is implemented but requires backend configuration; see [Crews](CREWS.md).
 - These limits are an alpha baseline, not a production security audit. Before public access, add hosting-level connection/creation-rate controls, observability and representative load/network testing. The room code is a private invite, not proof of account identity.
 
 ## Deploy the match service

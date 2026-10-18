@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
+import { crewContribution } from './crew-progress.mjs';
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 export class CrewError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -41,6 +42,11 @@ export function createCrewStore({ url, secretKey, fetchImpl = fetch }) {
       return user.id;
     },
     async get(id) { account(id); return rpc('get_crew', { p_account: id }); },
+    async recordWin(matchId, match, accountIds) {
+      const event = crewContribution(matchId, match, accountIds);
+      if (!event) return 0;
+      return rpc('record_crew_win', { p_match: event.matchId, p_accounts: event.accountIds, p_rescues: event.rescues });
+    },
     async create(id, name) {
       account(id);
       if (typeof name !== 'string' || !/^[\p{L}\p{N} '\-]{3,24}$/u.test(name.trim()))

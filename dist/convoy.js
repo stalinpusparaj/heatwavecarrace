@@ -4,6 +4,7 @@ const V=(()=>{
 const DEFAULT_SERVER='wss://runroad-convoy-alpha.onrender.com/convoy';
 let socket=null,active=false,id=0,room='',token='',endpoint='',latest=null,previous=null;
 let received=0,raf=null,sendAt=0,paintAt=0,hudAt=0,seq=0,boost=false,rescue=false;
+let crewAccess=null;
 let closing=false,retryTimer=null,retryUntil=0,finished=false,started=false,warming=false,attempt=0,warmAbort=null;
 const $v=id=>document.getElementById(id);
 function status(text){$v('convoyStatus').textContent=text}
@@ -31,6 +32,7 @@ async function connect(type){
     if(type==='join'&&!/^[0-9A-F]{8}$/.test(room))throw Error('Enter your friend’s eight-character room code.');
     closing=false;finished=false;started=false;seq=0;latest=previous=null;token='';retryUntil=0;
     warming=true;$v('convoyCreate').disabled=$v('convoyJoin').disabled=true;
+    crewAccess=typeof Crew!=='undefined'?await Crew.tokenFor(endpoint):null;
     await warmServer(endpoint,request);
     if(request!==attempt)return;
     openSocket(type);status('Server ready · connecting both drivers…');
@@ -58,7 +60,7 @@ async function warmServer(value,request){
 function openSocket(type){
   const ws=new WebSocket(endpoint);socket=ws;
   const timer=setTimeout(()=>{if(ws.readyState!==WebSocket.OPEN){ws.close();status('Could not reach that server. Check its address and hosting status.')}},8000);
-  ws.onopen=()=>{clearTimeout(timer);send({type,rules:1,code:room,token})};
+  ws.onopen=()=>{clearTimeout(timer);send({type,rules:1,code:room,token,...(crewAccess&&type!=='reconnect'?{accessToken:crewAccess}:{})})};
   ws.onmessage=e=>{
     try{
       if(e.data.length>20000)throw Error('Invalid server response.');
@@ -103,7 +105,7 @@ function receive(s){
     $v('convoyLobbyText').textContent=partner?`Driver ${id+1}: ${s.players[id].ready?'ready':'waiting'} · Driver ${2-id}: ${partner.ready?'ready':'waiting'}`:'Waiting for your friend. Send them this code and the same server address.';
   }else if(s.phase==='countdown')$v('convoyLobbyText').textContent=`Jun: “Stay together.” Leaving in ${s.countdown}…`;
   else if(s.phase==='playing'){started=true;$v('convoyLobby').hidden=true;}
-  if(s.phase==='won'||s.phase==='lost')finish(s.phase==='won',s.reason);
+  if(s.phase==='won'||s.phase==='lost'){finish(s.phase==='won',s.reason);crewReward(s.crewReward)}
 }
 function steering(){
   if(document.hidden||$('over').hidden===false)return null;
@@ -152,6 +154,11 @@ function drawWorld(g){
   const f=Math.min(1,(performance.now()-received)/(1000/15));const p=interpolate(previous?.players[1-id],b,f);
   g.save();g.globalAlpha=b.connected?1:.45;vehicle(p,true);g.strokeStyle=b.hp>0?'#7bffe1':'#ff7464';g.lineWidth=3;g.beginPath();g.arc(p.x,p.y,31,0,TAU);g.stroke();g.fillStyle=b.hp>0?'#b5ffef':'#ffb1a5';g.font='bold 12px sans-serif';g.textAlign='center';g.fillText(b.hp>0?'YOUR TEAMMATE':`RESCUE ${(b.rescue/2*100).toFixed(0)}%`,p.x,p.y-42);g.restore();
 }
+function crewReward(value){
+  if(!finished||!latest||latest.phase!=='won')return;
+  const text={pending:'Crew progress is saving… Keep this page open.',saved:'Crew escape saved. Refresh your crew garage to see shared progress.',checked:'Result confirmed. Open your crew garage to see shared progress.',failed:'Crew progress could not be saved. The escape is complete, but no saved reward is confirmed.',guest:'Guest escape. Both drivers must sign in for crew progress.'}[value]||'';
+  $('summary').textContent=latest.reason+' '+text+' No campaign credits or paid rewards.';
+}
 function finish(won,reason){
   if(finished)return;finished=true;cancelAnimationFrame(raf);raf=null;
   if(engineGain)engineGain.gain.value=0;
@@ -171,17 +178,17 @@ function pauseLive(){
 function leave(){
   if(!active&&!socket)return;closing=true;clearTimeout(retryTimer);cancelAnimationFrame(raf);raf=null;
   send({type:'leave'});socket?.close();socket=null;active=false;latest=previous=null;token='';
-  R.leave();rescue=boost=false;document.body.classList.remove('convoy-playing');
+  R.leave();crewAccess=null;rescue=boost=false;document.body.classList.remove('convoy-playing');
   $v('convoyLobby').hidden=true;$v('convoyRescue').hidden=true;
 }
 function init(){
   const button=$('rivalsButton');button.textContent='↗ PLAY WITH FRIENDS';button.onclick=show;
-  const d=document.createElement('dialog');d.id='convoyDialog';d.innerHTML=`<form method="dialog"><button aria-label="Close Convoy Escape" class="convoy-close">✕</button></form><div class="eyebrow">NOBODY DRIVES HOME ALONE</div><h2>CONVOY <em>ESCAPE.</em></h2><p>Two real drivers. Two supply caches. One way home.<br>Distract pursuit and hold RESCUE near a stalled friend.</p><details class="convoy-connection"><summary>Connection settings</summary><label for="convoyEndpoint">MATCH SERVER</label><input id="convoyEndpoint" placeholder="wss://your-match-server/convoy" spellcheck="false" type="url"></details><label for="convoyCode">FRIEND’S ROOM CODE</label><input id="convoyCode" placeholder="Eight characters" maxlength="8" autocomplete="off"><div class="convoy-buttons"><button id="convoyCreate" class="primary">CREATE ROOM ↗</button><button id="convoyJoin" class="secondary">JOIN FRIEND</button></div><p id="convoyStatus" role="status"></p><button id="convoyGhost" class="secondary">RIVAL ROUTES · RECORDED GHOSTS ↗</button><small>Live co-op on our free match server. Equal starter cars; no purchases or campaign rewards. Ghost challenges remain available offline.</small>`;document.body.append(d);
+  const d=document.createElement('dialog');d.id='convoyDialog';d.innerHTML=`<form method="dialog"><button aria-label="Close Convoy Escape" class="convoy-close">✕</button></form><div class="eyebrow">NOBODY DRIVES HOME ALONE</div><h2>CONVOY <em>ESCAPE.</em></h2><p>Two real drivers. Two supply caches. One way home.<br>Distract pursuit and hold RESCUE near a stalled friend.</p><details class="convoy-connection"><summary>Connection settings</summary><label for="convoyEndpoint">MATCH SERVER</label><input id="convoyEndpoint" placeholder="wss://your-match-server/convoy" spellcheck="false" type="url"></details><label for="convoyCode">FRIEND’S ROOM CODE</label><input id="convoyCode" placeholder="Eight characters" maxlength="8" autocomplete="off"><div class="convoy-buttons"><button id="convoyCreate" class="primary">CREATE ROOM ↗</button><button id="convoyJoin" class="secondary">JOIN FRIEND</button></div><p id="convoyStatus" role="status"></p><button id="convoyCrew" class="secondary">COMMUNITY CREW GARAGE ↗</button><button id="convoyGhost" class="secondary">RIVAL ROUTES · RECORDED GHOSTS ↗</button><small>Live co-op on our free match server. Equal starter cars; no purchases or campaign rewards. Ghost challenges remain available offline.</small>`;document.body.append(d);
   const lobby=document.createElement('section');lobby.id='convoyLobby';lobby.hidden=true;lobby.innerHTML='<small>PRIVATE ROOM · SEND THIS CODE</small><strong id="convoyRoomLabel"></strong><p id="convoyLobbyText"></p><button id="convoyReady" class="primary">READY TO DRIVE</button><button id="convoyLeave" class="secondary">LEAVE CONVOY</button>';document.body.append(lobby);
   const r=document.createElement('button');r.id='convoyRescue';r.hidden=true;r.textContent='HOLD RESCUE';r.onpointerdown=e=>{r.setPointerCapture(e.pointerId);rescue=true};r.onpointerup=r.onpointercancel=()=>{rescue=false};document.body.append(r);
   d.addEventListener('close',()=>{if(!active){attempt++;warming=false;warmAbort?.abort();$v('convoyCreate').disabled=$v('convoyJoin').disabled=false;closing=true;socket?.close();socket=null}});
   $('convoyCreate').onclick=()=>connect('create');$('convoyJoin').onclick=()=>connect('join');
-  $('convoyGhost').onclick=()=>{d.close();R.show()};$('convoyReady').onclick=()=>{send({type:'ready'});$('convoyReady').disabled=true;$('convoyReady').textContent='WAITING FOR YOUR FRIEND'};
+  $('convoyCrew').onclick=()=>{d.close();Crew.show()};$('convoyGhost').onclick=()=>{d.close();R.show()};$('convoyReady').onclick=()=>{send({type:'ready'});$('convoyReady').disabled=true;$('convoyReady').textContent='WAITING FOR YOUR FRIEND'};
   $('convoyLeave').onclick=()=>C.open('home');
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&active){rescue=boost=false;send({type:'input',seq:seq++,angle:null,boost:false,rescue:false,idle:true})}});
 }
