@@ -1,0 +1,7 @@
+.DS_Store
+mobile/.gradle/
+mobile/.kotlin/
+mobile/**/build/
+mobile/local.properties
+mobile/.idea/
+*.apk

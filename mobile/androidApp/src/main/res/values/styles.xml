@@ -1,0 +1,6 @@
+<resources><style name="Theme.Heatwave" parent="android:style/Theme.Material.NoActionBar">
+    <item name="android:fontFamily">sans</item><item name="android:windowLightStatusBar">false</item>
+    <item name="android:windowBackground">#080F1D</item><item name="android:colorAccent">#FF864F</item>
+    <item name="android:statusBarColor">#080F1D</item><item name="android:navigationBarColor">#080F1D</item>
+    <item name="android:windowActionModeOverlay">true</item>
+</style></resources>

@@ -51,3 +51,7 @@ For the browser renderer test, serve the repository root and open `/tests/render
 Use the **Auto / Eco / Balanced / High** graphics selector in the top-right corner. Auto adapts detail to sustained frame performance; Eco caps rendering at 30 FPS, while Balanced/High target 60. Canvas pixel budgets prevent excessive GPU work on high-DPI and high-refresh phones. Menus release the scene buffers, and inactive screens stop the animation loop. Physics and difficulty remain identical across quality modes. Fonts are bundled locally, and menu images use smaller WebP assets.
 
 Run `node tests/performance.cjs` for profile/adaptation tests, alongside `node tests/campaign.cjs` for gameplay and frame-cap checks. See `docs/PERFORMANCE.md` for budgets, measured file sizes, and verification limits.
+
+## Native KMP mobile app
+
+The `mobile/` project wraps the bundled game in a native Android WebView, with shared Kotlin Multiplatform shell logic and an iOS WKWebView host scaffold. Android runs offline without Chrome, a local web server, or hosted-site sign-in. See [mobile/README.md](mobile/README.md) for build, install, lifecycle, storage, and iOS verification details.
