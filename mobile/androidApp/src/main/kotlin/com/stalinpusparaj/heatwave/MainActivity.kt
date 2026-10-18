@@ -98,10 +98,11 @@ class MainActivity : Activity() {
             }
         }
         game.webViewClient = object : WebViewClient() {
-            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse =
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
                 if (GameShell.isBundledUrl(request.url.toString())) {
                     loader.shouldInterceptRequest(request.url) ?: blockedResponse()
-                } else blockedResponse()
+                } else if (request.method == "GET" && GameShell.isMatchHealthUrl(request.url.toString())) null
+                else blockedResponse()
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 if (GameShell.isBundledUrl(request.url.toString())) return false
