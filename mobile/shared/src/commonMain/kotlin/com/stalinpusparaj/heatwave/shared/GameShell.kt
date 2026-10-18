@@ -2,7 +2,7 @@ package com.stalinpusparaj.heatwave.shared
 
 /** Shared shell contract used by Android and the iOS framework. No server is needed. */
 object GameShell {
-    const val title = "Heatwave"
+    const val title = "RUNROAD"
     const val androidOrigin = "https://appassets.androidplatform.net"
     const val androidEntry = "$androidOrigin/assets/web/index.html"
     const val pauseScript = "(function(){if(typeof state!=='undefined'&&state==='playing')pause();})()"

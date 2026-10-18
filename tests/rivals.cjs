@@ -1,0 +1,13 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');const store={},els=new Map(),noop=()=>{};const ctx=new Proxy({createLinearGradient:()=>({addColorStop:noop})},{get:(o,k)=>o[k]||noop});const el=id=>{if(!els.has(id))els.set(id,{style:{},dataset:{},hidden:false,textContent:'',innerHTML:'',firstElementChild:{style:{}},getContext:()=>ctx,addEventListener:noop,append:noop,classList:{toggle:noop},querySelector:q=>el(id+q),querySelectorAll:()=>[]});return els.get(id)};const s={console,Math,document:{getElementById:el,querySelector:()=>null,body:{dataset:{},classList:{add:noop,remove:noop}},addEventListener:noop},innerWidth:390,innerHeight:844,devicePixelRatio:3,addEventListener:noop,requestAnimationFrame:noop,performance:{now:()=>0},localStorage:{getItem:k=>store[k]||null,setItem:(k,v)=>store[k]=v}};vm.createContext(s);let campaign=fs.readFileSync('dist/campaign.js','utf8');campaign=campaign.replace('return{init,open,close,prepare','return{setTest:(w,l)=>{world=w;level=l},getTest:()=>({points,hazards}),init,open,close,prepare');vm.runInContext(['performance','campaign','skills','renderer','rivals','game'].map(f=>fs.readFileSync('dist/'+f+'.js','utf8')).join('\n'),s);
+vm.runInContext(`
+function ok(value,message){if(!value)throw Error(message)}
+R.configure('HW1-4-123ABC');const code='HW1-4-123ABC';ok(C.world===4&&C.mission().seconds===75,'challenge rules');
+C.data.selected=4;C.data.upgrades[4]=[5,5,5];ok(C.speed===185&&C.turn===3.3&&C.maxHp===100&&C.armor===1&&C.car.name==='Dust Devil','standard stats');
+const before=JSON.stringify(C.data);let paths=[];
+for(const mode of ['eco','high']){P.setMode(mode);R.configure(code);start();keys.ArrowLeft=true;const initial=JSON.stringify(obstacles);for(let i=0;i<180;i++){for(let j=0;j<(mode==='eco'?2:9);j++)Math.random();update(1/60)}keys.ArrowLeft=false;paths.push(JSON.stringify({initial,x:player.x,y:player.y,hp:player.hp,score,cops}));}
+ok(paths[0]===paths[1],'gameplay is independent of visual random/quality');
+end(true);ok(JSON.stringify(C.data)===before,'no campaign progression or wallet changes');
+const good={version:1,code,time:1,score:20,success:false,samples:[[0,0,300,0],[.1,2,300,0]]};ok(R.validate(good)===good,'valid ghost');
+for(const invalid of [{...good,version:2},{...good,code:'HW1-9-ABC'},{...good,samples:[[0,Infinity,0,0]]},{...good,samples:[[0,0,0,0],[0,1,1,0]]},{...good,samples:Array(800).fill([0,0,0,0])},{...good,time:1000}]){let failed=false;try{R.validate(invalid)}catch{failed=true}ok(failed,'invalid ghost rejected')}
+R.leave();ok(!R.active&&C.speed===271,'campaign build restored');console.log('PASS: seeded pursuit across quality tiers, standardized car, no campaign rewards, ghost bounds/version/timestamps and campaign restoration');
+`,s);

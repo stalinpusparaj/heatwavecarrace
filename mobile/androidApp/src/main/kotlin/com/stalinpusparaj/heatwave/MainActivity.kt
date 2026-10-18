@@ -17,6 +17,10 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.webkit.WebViewAssetLoader
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
+import android.util.Base64
+import org.json.JSONObject
 import com.stalinpusparaj.heatwave.shared.GameShell
 import java.io.ByteArrayInputStream
 
@@ -24,6 +28,8 @@ class MainActivity : Activity() {
     private lateinit var game: WebView
     private lateinit var root: FrameLayout
     private var rendererGone = false
+    private var fileCallback: ValueCallback<Array<Uri>>? = null
+    private var pendingExport: ByteArray? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +65,38 @@ class MainActivity : Activity() {
             displayZoomControls = false
         }
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
-        game.webChromeClient = WebChromeClient()
+        game.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
+                fileCallback?.onReceiveValue(null)
+                fileCallback = callback
+                return runCatching {
+                    startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                        addCategory(Intent.CATEGORY_OPENABLE); type = "application/json"
+                    }, 41)
+                    true
+                }.getOrElse { fileCallback?.onReceiveValue(null); fileCallback = null; false }
+            }
+        }
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            WebViewCompat.addWebMessageListener(game, "RunroadFiles", setOf(GameShell.androidOrigin)) { _, message, origin, mainFrame, _ ->
+                if (mainFrame && origin.toString() == GameShell.androidOrigin && pendingExport == null) {
+                    runCatching {
+                        val request = JSONObject(message.data ?: "")
+                        val mime = request.getString("mime")
+                        val name = request.getString("name")
+                        val encoded = request.getString("data")
+                        require(mime in listOf("image/png", "application/json"))
+                        require(name.matches(Regex("[a-zA-Z0-9._-]{1,80}")))
+                        require(encoded.length <= 2_000_000)
+                        pendingExport = Base64.decode(encoded, Base64.DEFAULT)
+                        startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE); type = mime
+                            putExtra(Intent.EXTRA_TITLE, name)
+                        }, 42)
+                    }.onFailure { pendingExport = null }
+                }
+            }
+        }
         game.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse =
                 if (GameShell.isBundledUrl(request.url.toString())) {
@@ -88,6 +125,23 @@ class MainActivity : Activity() {
         game.loadUrl(GameShell.androidEntry)
     }
 
+    @Deprecated("Legacy document picker callback")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 41) {
+            fileCallback?.onReceiveValue(if (resultCode == RESULT_OK) data?.data?.let { arrayOf(it) } else null)
+            fileCallback = null
+        }
+        if (requestCode == 42) {
+            val bytes = pendingExport
+            pendingExport = null
+            if (resultCode == RESULT_OK && bytes != null) data?.data?.let { uri ->
+                runCatching { contentResolver.openOutputStream(uri)?.use { it.write(bytes) } }
+                    .onFailure { android.widget.Toast.makeText(this, "Could not save file. Try again.", android.widget.Toast.LENGTH_LONG).show() }
+            }
+        }
+    }
+
     private fun blockedResponse() = WebResourceResponse("text/plain", "UTF-8", 404,
         "Not found", emptyMap(), ByteArrayInputStream(ByteArray(0)))
 
@@ -96,7 +150,7 @@ class MainActivity : Activity() {
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.CENTER; setPadding(40, 40, 40, 40)
             addView(TextView(this@MainActivity).apply { text = message; setTextColor(Color.WHITE); textSize = 18f })
-            addView(Button(this@MainActivity).apply { text = "RELOAD HEATWAVE"; setOnClickListener {
+            addView(Button(this@MainActivity).apply { text = "RELOAD RUNROAD"; setOnClickListener {
                 if (!rendererGone) game.destroy()
                 openGame()
             } })
@@ -125,6 +179,9 @@ class MainActivity : Activity() {
     }
     override fun onDestroy() {
         if (::game.isInitialized && !rendererGone) { root.removeView(game); game.stopLoading(); game.destroy() }
+        fileCallback?.onReceiveValue(null)
+        fileCallback = null
+        pendingExport = null
         super.onDestroy()
     }
     @Suppress("DEPRECATION")
