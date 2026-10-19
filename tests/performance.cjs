@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const code=fs.readFileSync('dist/performance.js','utf8');
 function profile(nav={},saved=null,touch=false){let changes=0;const sandbox={navigator:nav,matchMedia:q=>({matches:touch&&q==='(pointer: coarse)'}),document:{body:{dataset:{}}},localStorage:{getItem:()=>saved,setItem:()=>{}}};vm.createContext(sandbox);vm.runInContext(code+'\nthis.profile=P',sandbox);sandbox.profile.onChange(()=>changes++);return{p:sandbox.profile,changes:()=>changes}}
-let {p}=profile({deviceMemory:2,hardwareConcurrency:4});assert.equal(p.tier,0);assert.equal(p.config.fps,30);assert.equal(p.config.terrain,768);
+let {p}=profile({deviceMemory:2,hardwareConcurrency:4});assert.equal(p.tier,0);assert.equal(p.config.fps,30);assert.equal(p.config.terrain,768);assert.equal(p.config.pixels,300000);assert.equal(p.config.particles,16);assert.equal(p.config.marks,24);
 for(const [w,h] of [[360,800],[1080,2400],[2560,1440],[3840,2160]])for(const mode of ['eco','balanced','high']){p.setMode(mode);const r=p.pixelRatio(w,h,3);assert(w*h*r*r<=p.config.pixels+1,'canvas pixel budget');assert(r<=p.config.dpr,'DPR cap')}
 assert.equal(profile({deviceMemory:8,hardwareConcurrency:8}).p.tier,2);assert.equal(profile({hardwareConcurrency:8}).p.tier,1);assert.equal(profile({deviceMemory:8,hardwareConcurrency:8,connection:{saveData:true}}).p.tier,0);
 assert.equal(profile({deviceMemory:8,hardwareConcurrency:8},null,true).p.tier,1,'touch devices start Balanced');assert.equal(profile({hardwareConcurrency:4},null,true).p.tier,0,'weak touch devices start Eco');let t=profile({hardwareConcurrency:8},null,true);for(let i=0;i<500;i++)t.p.observe(34,22,true);assert.equal(t.p.tier,0,'touch devices drop to Eco on slow frames');

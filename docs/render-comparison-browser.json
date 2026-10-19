@@ -1,0 +1,59 @@
+{
+  "kind": "Frozen scene rendering benchmark (not full gameplay)",
+  "mission": "0/3",
+  "viewport": "739×907",
+  "dpr": 2,
+  "quality": "eco",
+  "order": [
+    "normal",
+    "pixel",
+    "pixel",
+    "normal"
+  ],
+  "segments": [
+    {
+      "samples": 720,
+      "painted": 172,
+      "frameMean": 8.339027777777781,
+      "frameP95": 9.299999999999272,
+      "renderMean": 0.19476743995450263,
+      "renderP95": 0.4000000059604645,
+      "workMean": 0.048194444013966456,
+      "longFrames": 0,
+      "canvas": "494×606"
+    },
+    {
+      "samples": 722,
+      "painted": 174,
+      "frameMean": 8.333379501385043,
+      "frameP95": 9.200000000000728,
+      "renderMean": 0.1816091951967656,
+      "renderP95": 0.4000000059604645,
+      "workMean": 0.04750692505915739,
+      "longFrames": 0,
+      "canvas": "240×294"
+    },
+    {
+      "samples": 722,
+      "painted": 172,
+      "frameMean": 8.332548476454292,
+      "frameP95": 9.200000000004366,
+      "renderMean": 0.19767441843138184,
+      "renderP95": 0.4000000059604645,
+      "workMean": 0.04847645425235136,
+      "longFrames": 0,
+      "canvas": "240×294"
+    },
+    {
+      "samples": 721,
+      "painted": 175,
+      "frameMean": 8.33342579750347,
+      "frameP95": 9.200000000004366,
+      "renderMean": 0.1771428564616612,
+      "renderP95": 0.4000000059604645,
+      "workMean": 0.04729542293264201,
+      "longFrames": 0,
+      "canvas": "494×606"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "method": "On-device real-engine scripted simulation; not a rendering or human playtest",
+  "status": "Completed",
+  "counts": [
+    {
+      "world": 1,
+      "runs": 100,
+      "won": 71,
+      "busted": 29,
+      "timeout": 0
+    },
+    {
+      "world": 2,
+      "runs": 100,
+      "won": 61,
+      "busted": 39,
+      "timeout": 0
+    },
+    {
+      "world": 3,
+      "runs": 100,
+      "won": 57,
+      "busted": 43,
+      "timeout": 0
+    },
+    {
+      "world": 4,
+      "runs": 100,
+      "won": 44,
+      "busted": 56,
+      "timeout": 0
+    },
+    {
+      "world": 5,
+      "runs": 100,
+      "won": 44,
+      "busted": 56,
+      "timeout": 0
+    }
+  ],
+  "capture": "Summary from emulator UI; Android accessibility truncates the full per-level JSON at 10000 characters."
+}
