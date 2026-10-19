@@ -29,3 +29,4 @@ body.overlay-open #hud,body.overlay-open #speedometer,body.overlay-open .bottom,
 .pass-tier{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin:6px 0;text-align:left}.pass-tier b{font-size:13px;letter-spacing:.06em}.pass-tier span{font-size:15px;font-weight:700}
 .supporter-offer ul li b{color:#ffd173}.pass-bonus{color:#74ddbe!important;font-weight:700;letter-spacing:.04em}
 .pass-tier.secondary{border:1px solid #ffd17366;background:#ffffff0d;border-radius:12px;padding:12px 16px;min-height:56px}
+.rescue-line{color:#fff!important;font-size:15px!important;font-style:italic;line-height:1.5;margin:6px 0!important}
