@@ -31,7 +31,7 @@ This adapter is deliberately **read-only**: it has no checkout launch, purchase 
 
 ## Required to take real payments
 
-1. Supply a Play Console application for `com.stalinpusparaj.heatwave`, a signing/upload setup and an internal testing track. Create the actual cosmetic product and agree on its product ID and localized price.
+1. Supply a Play Console application for `com.gemmyapps.RUNROAD`, a signing/upload setup and an internal testing track. Create the actual cosmetic product and agree on its product ID and localized price.
 2. Connect authenticated server receipt verification to Google Play Developer API using protected server credentials. Validate package, product, purchase state and account binding. Persist entitlements separately from local Passport data, deduplicate tokens, and handle acknowledgment, refunds/revocation and restore.
 3. Implement and test the native checkout and restoration flows against this verifier, including cancellation, pending transactions, offline recovery and account changes. Then enable sale in the UI using only real store prices.
 4. For ads, provide an AdMob app/ad-unit setup and audience decisions. Integrate native rewarded ads and required consent; grant a reward only from the actual earned-reward event with once-per-run settlement. Test units produce no revenue and must never be described as live monetization.

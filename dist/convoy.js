@@ -85,7 +85,7 @@ function openSocket(type){
     }else status('Connection closed. Check the server address, then create or join again.');
   };
 }
-function enter(msg){
+function enter(msg){if(typeof Intro!=='undefined')Intro.leave();
   if(rafId!==null){cancelAnimationFrame(rafId);rafId=null}R.leave();R.configure('HW1-0-1');R.hideResults();active=true;finished=false;
   resize();C.close();S.reset();G.reset();initAudio();if(audio)audio.resume();
   obstacles.splice(0,obstacles.length,...msg.obstacles);G.invalidate();
@@ -99,7 +99,7 @@ function enter(msg){
 }
 function receive(s){
   if(!Array.isArray(s.players)||s.players.length>2||!s.players[id])return;
-  previous=latest||s;latest=s;received=performance.now();
+  previous=latest||s;latest=s;if(s.phase==='playing'&&previous.phase==='playing'){for(const driver of s.players){const before=previous.players.find(p=>p.id===driver.id);if(before&&before.hp<=0&&driver.hp>0){toast(driver.id===id?'YOUR FRIEND CAME BACK':'FRIEND RESCUED');sound(740,.2)}}}received=performance.now();
   const partner=s.players[1-id];
   if(s.phase==='lobby'){
     $v('convoyLobbyText').textContent=partner?`Driver ${id+1}: ${s.players[id].ready?'ready':'waiting'} · Driver ${2-id}: ${partner.ready?'ready':'waiting'}`:'Waiting for your friend. Send them this code and the same server address.';
@@ -135,16 +135,16 @@ function drawHud(){
   const ally=latest.players[1-id],collected=latest.supplies.filter(s=>s.taken).length;
   $('missionHud').hidden=finished||!started;
   const me=latest.players[id];
-  const goal=collected===2?latest.exit:latest.supplies.filter(s=>!s.taken).sort((a,b)=>Math.hypot(a.x-me.x,a.y-me.y)-Math.hypot(b.x-me.x,b.y-me.y))[0];
+  const goal=ally&&ally.hp<=0?ally:collected===2?latest.exit:latest.supplies.filter(s=>!s.taken).sort((a,b)=>Math.hypot(a.x-me.x,a.y-me.y)-Math.hypot(b.x-me.x,b.y-me.y))[0];
   const bearing=goal?Math.atan2(goal.y-me.y,goal.x-me.x)*180/Math.PI+90:0;
-  $('missionHud').innerHTML=`<div><b>CONVOY ${room} · DRIVER ${id+1}</b><span>${collected<2?`SUPPLIES ${collected}/2 · Bring them home`:'BOTH DRIVERS → GREEN EXIT'}</span></div>${goal?`<div class="navigation-hint"><b style="transform:rotate(${bearing}deg)">↑</b><small>${Math.round(Math.hypot(goal.x-me.x,goal.y-me.y))}m</small></div>`:''}<strong>${Math.max(0,Math.ceil(120-latest.time))}s</strong>`;
+  $('missionHud').innerHTML=`<div><b>CONVOY ${room} · DRIVER ${id+1}</b><span>${ally&&ally.hp<=0?'RETURN TO YOUR FRIEND · Hold RESCUE within 95m':collected<2?`SUPPLIES ${collected}/2 · Bring them home`:'BOTH DRIVERS → GREEN EXIT'}</span></div>${goal?`<div class="navigation-hint"><b style="transform:rotate(${bearing}deg)">↑</b><small>${Math.round(Math.hypot(goal.x-me.x,goal.y-me.y))}m</small></div>`:''}<strong>${Math.max(0,Math.ceil(120-latest.time))}s</strong>`;
   $('nitro').disabled=me.charge<40||me.boost>0||me.hp<=0;
   $('nitro').classList.toggle('ready',!$('nitro').disabled);
   $('nitro').querySelector('span').textContent=me.boost>0?'ϟ BOOSTING':me.charge>=40?'ϟ NITRO READY':'ϟ '+Math.floor(me.charge)+'%';
   $('nitro').querySelector('i').style.width=me.charge+'%';
   $('skillHud').querySelector('strong').textContent=ally?(ally.hp<=0?'ALLY STALLED · RESCUE':`ALLY · ${Math.round(Math.hypot(ally.x-me.x,ally.y-me.y))}m`):'WAITING FOR DRIVER 2';
   $('skillHud').querySelector('span').textContent=retryUntil?'Reconnecting…':ally&&!ally.connected?`Ally reconnecting · ${Math.max(0,10-ally.missing).toFixed(0)}s`:me.hp<=0?`You stalled · rescue in ${Math.max(0,18-me.stalled).toFixed(0)}s`:`${latest.rescues} shared rescue · hold near ally`;
-  $v('convoyRescue').disabled=!latest.rescues||me.hp<=0;
+  $v('convoyRescue').disabled=!latest.rescues||me.hp<=0||!ally||ally.hp>0; $v('convoyRescue').textContent=ally&&ally.hp<=0?`HOLD RESCUE · ${Math.round(ally.rescue/2*100)}%`:'ALLY SAFE';
 }
 function drawWorld(g){
   if(!active||!latest)return;
@@ -185,7 +185,7 @@ function init(){
   const button=$('rivalsButton');button.textContent='↗ PLAY WITH FRIENDS';button.onclick=show;
   const d=document.createElement('dialog');d.id='convoyDialog';d.innerHTML=`<form method="dialog"><button aria-label="Close Convoy Escape" class="convoy-close">✕</button></form><div class="eyebrow">NOBODY DRIVES HOME ALONE</div><h2>CONVOY <em>ESCAPE.</em></h2><p>Two real drivers. Two supply caches. One way home.<br>Distract pursuit and hold RESCUE near a stalled friend.</p><details class="convoy-connection"><summary>Connection settings</summary><label for="convoyEndpoint">MATCH SERVER</label><input id="convoyEndpoint" placeholder="wss://your-match-server/convoy" spellcheck="false" type="url"></details><label for="convoyCode">FRIEND’S ROOM CODE</label><input id="convoyCode" placeholder="Eight characters" maxlength="8" autocomplete="off"><div class="convoy-buttons"><button id="convoyCreate" class="primary">CREATE ROOM ↗</button><button id="convoyJoin" class="secondary">JOIN FRIEND</button></div><p id="convoyStatus" role="status"></p><button id="convoyCrew" class="secondary">COMMUNITY CREW GARAGE ↗</button><button id="convoyGhost" class="secondary">RIVAL ROUTES · RECORDED GHOSTS ↗</button><small>Live co-op on our free match server. Equal starter cars; no purchases or campaign rewards. Ghost challenges remain available offline.</small>`;document.body.append(d);
   const lobby=document.createElement('section');lobby.id='convoyLobby';lobby.hidden=true;lobby.innerHTML='<small>PRIVATE ROOM · SEND THIS CODE</small><strong id="convoyRoomLabel"></strong><p id="convoyLobbyText"></p><button id="convoyReady" class="primary">READY TO DRIVE</button><button id="convoyLeave" class="secondary">LEAVE CONVOY</button>';document.body.append(lobby);
-  const r=document.createElement('button');r.id='convoyRescue';r.hidden=true;r.textContent='HOLD RESCUE';r.onpointerdown=e=>{r.setPointerCapture(e.pointerId);rescue=true};r.onpointerup=r.onpointercancel=()=>{rescue=false};document.body.append(r);
+  const r=document.createElement('button');r.id='convoyRescue';r.hidden=true;r.textContent='HOLD TO RESCUE';r.onpointerdown=e=>{r.setPointerCapture(e.pointerId);rescue=true};r.onpointerup=r.onpointercancel=()=>{rescue=false};document.body.append(r);
   d.addEventListener('close',()=>{if(!active){attempt++;warming=false;warmAbort?.abort();$v('convoyCreate').disabled=$v('convoyJoin').disabled=false;closing=true;socket?.close();socket=null}});
   $('convoyCreate').onclick=()=>connect('create');$('convoyJoin').onclick=()=>connect('join');
   $('convoyCrew').onclick=()=>{d.close();Crew.show()};$('convoyGhost').onclick=()=>{d.close();R.show()};$('convoyReady').onclick=()=>{send({type:'ready'});$('convoyReady').disabled=true;$('convoyReady').textContent='WAITING FOR YOUR FRIEND'};

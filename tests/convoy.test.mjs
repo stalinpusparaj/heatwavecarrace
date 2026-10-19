@@ -43,3 +43,11 @@ test('collision damage and stalled/time/disconnect losses are server owned',()=>
  const s=setup();s.phase='playing';s.players[0].hp=0;ticks(s,542);assert.equal(s.phase,'lost');
  assert.equal(STEP,1/30);
 });
+
+test('rescue interruption resets progress and recovery provides protection once',()=>{
+ const m=setup();m.phase='playing';const [a,b]=m.players;b.hp=0;a.x=b.x;a.y=b.y;
+ for(let i=0;i<25;i++){input(a,i,{rescue:true});step(m)}assert.ok(b.rescue>0);
+ input(a,25,{rescue:false});step(m);assert.equal(b.rescue,0);
+ for(let i=26;i<90;i++){input(a,i,{rescue:true});step(m)}assert.equal(b.hp,45);assert.ok(b.inv>2.8);assert.equal(m.rescues,0);
+ const points=m.score;for(let i=90;i<100;i++){input(a,i,{rescue:true});step(m)}assert.equal(m.score,points);
+});
