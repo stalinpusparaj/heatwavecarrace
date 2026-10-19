@@ -1,6 +1,6 @@
 # Heatwave: The Road Home — freemium and story proposal
 
-Status: product proposal, not a live monetization change. Audience and business-model preferences are awaiting the owner's answer. Existing free gameplay stays available; no purchases or ad SDKs are activated by this document.
+Status: commercial/story proposal. Driver Passport, daily contracts, Perfect Nitro, free earned liveries and a read-only native Play catalog are implemented; see [current implementation](ENGAGEMENT_MONETIZATION.md). Real purchases, paid entitlements and ads remain inactive pending store/backend setup. Existing free gameplay stays available.
 
 ## Product promise
 

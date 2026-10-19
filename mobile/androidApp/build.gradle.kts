@@ -17,7 +17,7 @@ android {
     namespace = "com.stalinpusparaj.heatwave"
     compileSdk = 37
     defaultConfig {
-        applicationId = "com.stalinpusparaj.heatwave"
+        applicationId = "com.gemmyapps.RUNROAD"
         minSdk = 24; targetSdk = 36
         versionCode = 1; versionName = "1.0.0"
     }
@@ -29,4 +29,4 @@ android {
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 }
 androidComponents { onVariants { it.sources.assets?.addGeneratedSourceDirectory(gameAssets, SyncGameAssets::outputDirectory) } }
-dependencies { implementation(project(":shared")); implementation("androidx.webkit:webkit:1.17.1"); implementation("androidx.core:core:1.19.1") }
+dependencies { implementation(project(":shared")); implementation("com.android.billingclient:billing:9.1.0"); implementation("androidx.webkit:webkit:1.17.1"); implementation("androidx.core:core:1.19.1") }

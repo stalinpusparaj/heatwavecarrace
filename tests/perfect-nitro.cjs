@@ -1,0 +1,5 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+let message='';const s={document:{},state:'playing',R:{active:false},V:{active:false},shake:0,sound:()=>{},toast:text=>message=text};vm.createContext(s);vm.runInContext(fs.readFileSync('dist/skills.js','utf8'),s);const api=vm.runInContext('S',s);
+api.reset();api.event('wreck');api.event('wreck');api.event('wreck');assert.equal(api.charge,86);assert.equal(api.boost(),true);assert.equal(api.active,1.9);assert.equal(api.stats.perfects,1);assert.match(message,/PERFECT/);assert.equal(api.boost(),false);
+s.R.active=true;api.reset();api.event('wreck');api.event('wreck');api.event('wreck');assert.equal(api.boost(),true);assert.equal(api.active,1.5);assert.equal(api.stats.perfects,0,'Rival physics changed');
+s.R.active=false;api.reset();assert.equal(api.boost(),true);assert.equal(api.active,1.5);assert.equal(api.stats.perfects,0,'ordinary boost changed');console.log('PASS: solo Perfect Nitro timing, normal boosts, spam guard and Rival Routes isolation');

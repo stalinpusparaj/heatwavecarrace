@@ -10,7 +10,7 @@ Requirements: JDK 17+, Android SDK platform 37, current Android SDK tools. This 
 cd mobile
 ./gradlew :androidApp:assembleDebug :shared:jvmTest
 adb -s emulator-5554 install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
-adb -s emulator-5554 shell am start -n com.stalinpusparaj.heatwave/.MainActivity
+adb -s emulator-5554 shell am start -n com.gemmyapps.RUNROAD/com.stalinpusparaj.heatwave.MainActivity
 ```
 
 On this Mac, prefix Gradle commands with:
@@ -23,7 +23,7 @@ The build copies the current repository `dist/` into the app automatically. Rebu
 
 Features: portrait/immersive layout; hardware-accelerated canvas; localStorage progress; native Back pauses a chase, then returns to the menu; app backgrounding pauses gameplay/audio; the renderer/timers stop while backgrounded; a reload screen handles WebView failures. Normal resumes keep the game's pause screen so the player can choose when to continue.
 
-App ID: `com.stalinpusparaj.heatwave`. Android minimum SDK: 24. Debug WebView inspection is enabled only in debug builds. File/content URL access and mixed content are disabled. Bundled resource paths are restricted; external user-tapped HTTP(S) links open in the system browser. The Android app has no exposed JavaScript bridge.
+App ID: `com.gemmyapps.RUNROAD`. Android minimum SDK: 24. Debug WebView inspection is enabled only in debug builds. File/content URL access and mixed content are disabled. Bundled resource paths are restricted; external user-tapped HTTP(S) links open in the system browser. The Android app has no exposed JavaScript bridge.
 
 Release builds enable shrinking/minification. Configure your own release signing before distributing a production APK/AAB; this task only creates a debug-signed installable build.
 

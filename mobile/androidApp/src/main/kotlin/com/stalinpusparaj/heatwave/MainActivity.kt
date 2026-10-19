@@ -28,6 +28,7 @@ class MainActivity : Activity() {
     private lateinit var game: WebView
     private lateinit var root: FrameLayout
     private var rendererGone = false
+    private var storeCatalog: StoreCatalog? = null
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingExport: ByteArray? = null
 
@@ -46,6 +47,8 @@ class MainActivity : Activity() {
     private fun openGame() {
         root.removeAllViews()
         rendererGone = false
+        storeCatalog?.close()
+        storeCatalog = StoreCatalog(this)
         game = WebView(this)
         val loader = WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this)).build()
@@ -78,6 +81,16 @@ class MainActivity : Activity() {
             }
         }
         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            WebViewCompat.addWebMessageListener(game, "RunroadStore", setOf(GameShell.androidOrigin)) { _, message, origin, mainFrame, reply ->
+                if (mainFrame && origin.toString() == GameShell.androidOrigin) {
+                    val raw = message.data ?: ""
+                    if (raw.length <= 256 && runCatching { JSONObject(raw).getString("type") }.getOrNull() == "catalog") {
+                        runOnUiThread { storeCatalog?.query { result ->
+                            runOnUiThread { if (!isDestroyed && !rendererGone) runCatching { reply.postMessage(result) } }
+                        } }
+                    }
+                }
+            }
             WebViewCompat.addWebMessageListener(game, "RunroadFiles", setOf(GameShell.androidOrigin)) { _, message, origin, mainFrame, _ ->
                 if (mainFrame && origin.toString() == GameShell.androidOrigin && pendingExport == null) {
                     runCatching {
@@ -180,6 +193,7 @@ class MainActivity : Activity() {
     }
     override fun onDestroy() {
         if (::game.isInitialized && !rendererGone) { root.removeView(game); game.stopLoading(); game.destroy() }
+        storeCatalog?.close()
         fileCallback?.onReceiveValue(null)
         fileCallback = null
         pendingExport = null
