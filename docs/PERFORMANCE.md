@@ -17,3 +17,6 @@ Runtime assets total 710,208 bytes, including 81,344 bytes of local Latin-subset
 Verification: syntax checks; all 500 campaign layouts; purchase/reward/nitro tests; simulated hardware tiers; canvas pixel-budget tests at phone, desktop, and 4K sizes; auto downgrade/recovery hysteresis; saved/manual mode tests; 30/60 FPS paint-cap tests with equal simulation elapsed time. Chrome QA exercised Eco/High switching, observed a roughly 29–30 FPS Eco run, and verified a 1×1 idle gameplay canvas.
 
 These are resource limits and targets, not guaranteed frame rates on every phone. Real low-end Android/iOS testing, thermal soak, power profiling, and browser-specific GPU testing remain outstanding. The attached Android phone was previously blocked by device parental controls, so these checks do not constitute physical-device validation.
+
+
+Auto start tier: weak devices (≤2 GB memory, ≤4 cores, or Save-Data) start on Eco. Touch devices otherwise start on Balanced so the textured art shows from the first frame, and Auto drops them to Eco after about 100 sustained slow frames. Desktops start on Balanced, or High on strong hardware.

@@ -3,7 +3,8 @@ const P=(()=>{
 const nav=typeof navigator==='undefined'?{}:navigator;
 const weak=(nav.deviceMemory&&nav.deviceMemory<=2)||(nav.hardwareConcurrency&&nav.hardwareConcurrency<=4)||nav.connection?.saveData;
 const strong=nav.deviceMemory>=8&&nav.hardwareConcurrency>=8;
-const ceiling=weak?1:2,initial=weak?0:strong?2:1;
+const mobile=typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches;
+const ceiling=weak?1:2,initial=weak?0:mobile?1:strong?2:1;
 const profiles=[{name:'Eco',fps:30,dpr:1,pixels:600000,terrain:768,particles:32,marks:40,fx:.35,detail:.35,hud:.25},{name:'Balanced',fps:60,dpr:1.5,pixels:1200000,terrain:1024,particles:64,marks:80,fx:.65,detail:.65,hud:.16},{name:'High',fps:60,dpr:2,pixels:2000000,terrain:1536,particles:110,marks:140,fx:1,detail:1,hud:.1}];
 let mode='auto',tier=initial,slow=0,fast=0,warmup=120,work=0,gap=16.7,count=0,paints=0,windowMs=0,actualFps=0,listener=null;
 try{const stored=localStorage.getItem('heatwave-quality');if(['auto','eco','balanced','high'].includes(stored))mode=stored}catch{}

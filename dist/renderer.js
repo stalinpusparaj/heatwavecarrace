@@ -1,13 +1,13 @@
 'use strict';
-// One active environment cache, resolution selected by the performance profile.
+// Balanced/High: one cached textured environment and vehicle sprites. Eco: flat geometry and geometric cars, no images or cache.
 const G=(()=>{
-const imgs={},wrecks=Array.from({length:12},()=>({life:0})),flashes=Array.from({length:8},()=>({life:0}));
-let cache=null,cacheKey='',vignette=null,vKey='',zoom=1.04,wreckIndex=0,flashIndex=0,smokeClock=0,glow=null,dust=null,smoke=null;
+const imgs={},flashes=Array.from({length:8},()=>({life:0}));
+let cache=null,cacheKey='',vignette=null,vKey='',zoom=1.04,flashIndex=0,smokeClock=0,glow=null,dust=null,smoke=null;
 for(const [name,file] of Object.entries({vehicles:'vehicles.webp',props:'props.webp',terrain:'terrain.jpg'})){if(typeof Image==='undefined'){imgs[name]={complete:false};continue}const im=new Image();im.onload=()=>{cacheKey=''};im.src='assets/'+file;imgs[name]=im;}
 const ready=im=>im&&im.complete&&im.naturalWidth>0;
 function surface(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c}
 function makeEffects(){if(glow)return;glow=surface(96,96);let g=glow.getContext('2d'),r=g.createRadialGradient(48,48,0,48,48,48);r.addColorStop(0,'#fff9d4');r.addColorStop(.15,'#ffd17a');r.addColorStop(.45,'#fa672d88');r.addColorStop(1,'#fa672d00');g.fillStyle=r;g.fillRect(0,0,96,96);dust=surface(64,64);g=dust.getContext('2d');r=g.createRadialGradient(32,32,0,32,32,32);r.addColorStop(0,'#e9dbc4a0');r.addColorStop(.5,'#d9cbbf55');r.addColorStop(1,'#d9cbbf00');g.fillStyle=r;g.fillRect(0,0,64,64);smoke=surface(64,64);g=smoke.getContext('2d');r=g.createRadialGradient(32,32,0,32,32,32);r.addColorStop(0,'#1d2532a0');r.addColorStop(.5,'#3b42535a');r.addColorStop(1,'#3b425300');g.fillStyle=r;g.fillRect(0,0,64,64)}
-function reset(){cacheKey='';zoom=1.04;wrecks.forEach(w=>w.life=0);flashes.forEach(f=>f.life=0);smokeClock=0;}
+function reset(){cacheKey='';zoom=1.04;flashes.forEach(f=>f.life=0);smokeClock=0;}
 function roadPath(g){g.beginPath();g.moveTo(-850,560);g.bezierCurveTo(-470,560,-390,180,-120,130);g.bezierCurveTo(220,60,450,-130,800,-570)}
 function bake(){const k=C.world+':'+C.level+':'+P.config.terrain;if(cacheKey===k&&cache)return;cacheKey=k;const size=P.config.terrain;if(!cache)cache=surface(size,size);else if(cache.width!==size){cache.width=size;cache.height=size}const g=cache.getContext('2d');const ratio=size/1536;g.setTransform(ratio,0,0,ratio,size/2,size/2);g.fillStyle=C.theme.sand;g.fillRect(-768,-768,1536,1536);if(ready(imgs.terrain)){for(let y=0;y<6;y++)for(let x=0;x<6;x++){g.save();g.translate(-640+x*256,-640+y*256);g.rotate(((x*7+y*3)%4)*Math.PI/2);g.drawImage(imgs.terrain,C.world*256,0,256,256,-128,-128,256,256);g.restore()}}
 let seed=(C.world+1)*9151+C.level*17;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
@@ -23,18 +23,29 @@ for(const o of obstacles){g.save();g.translate(o.x,o.y);g.fillStyle='#101b2d44';
 // Small vegetation, concrete scars, and pebbles stay purely decorative.
 for(let i=0;i<Math.ceil(115*P.config.detail);i++){const x=rand()*1360-680,y=rand()*1360-680;if(obstacles.some(o=>Math.hypot(x-o.x,y-o.y)<o.r+25))continue;g.save();g.translate(x,y);if(C.world===2){g.strokeStyle='#91b5c222';g.lineWidth=1;g.beginPath();g.moveTo(-12,-5);g.lineTo(7,2);g.lineTo(14,15);g.stroke()}else{const snowy=C.world===1;g.fillStyle='#18271f24';g.beginPath();g.ellipse(3,4,8,5,0,0,6.28);g.fill();for(let j=0;j<6;j++){const leaf=g.createRadialGradient(0,-2,0,0,1,9);leaf.addColorStop(0,snowy?'#eaf0e0':C.world===3?'#71635a':C.world===4?'#799b58':'#92916a');leaf.addColorStop(1,snowy?'#758a82':C.world===3?'#282b2b':C.world===4?'#263d2d':'#4d5642');g.fillStyle=leaf;g.beginPath();g.ellipse(Math.cos(j)*4,Math.sin(j)*4,2+rand()*3,2+rand()*4,j,0,6.28);g.fill()}}g.restore()}
 }
-function world(g){bake();g.drawImage(cache,-768,-768,1536,1536)}
-function vehicle(g,c,isPlayer){if(!ready(imgs.vehicles))return false;const i=isPlayer?(typeof R!=='undefined'&&R.active?0:C.data.selected):c.elite?6:5;g.save();g.translate(c.x,c.y);g.rotate(c.a+Math.PI/2);g.fillStyle='#07101c66';g.beginPath();g.ellipse(5,9,19,32,0,0,6.28);g.fill();if(P.tier>0&&(C.world===2||C.world===3)){g.fillStyle=isPlayer?'#6adff21b':'#596cdf16';g.beginPath();g.ellipse(0,3,25,39,0,0,6.28);g.fill()}
+// Eco: flat terrain with no terrain/prop images, tiled patterns, grain or full-map bitmap blit.
+function flat(g){
+if(cache){cache.width=cache.height=1;cache=null;cacheKey=''}
+g.fillStyle=C.theme.sand;g.fillRect(-768,-768,1536,1536);
+g.lineCap='round';g.strokeStyle=C.theme.shadow;g.lineWidth=132;roadPath(g);g.stroke();
+g.strokeStyle=C.world===1?'#81949d':C.world===4?'#66735c':'#50565a';g.lineWidth=112;roadPath(g);g.stroke();
+g.strokeStyle='#ede4b4';g.lineWidth=2;g.setLineDash([21,19]);roadPath(g);g.stroke();g.setLineDash([]);
+g.strokeStyle=C.theme.shadow;g.lineWidth=8;g.strokeRect(-714,-714,1428,1428);
+for(const o of obstacles){g.fillStyle=C.theme.shadow;g.beginPath();g.arc(o.x,o.y,o.r,0,Math.PI*2);g.fill();g.fillStyle=C.theme.rock;g.beginPath();g.arc(o.x-3,o.y-4,o.r*.82,0,Math.PI*2);g.fill()}
+}
+function world(g){if(P.tier===0){flat(g);return}bake();g.drawImage(cache,-768,-768,1536,1536)}
+function vehicle(g,c,isPlayer){if(P.tier===0||!ready(imgs.vehicles))return false;const i=isPlayer?(typeof R!=='undefined'&&R.active?0:C.data.selected):c.elite?6:5;g.save();g.translate(c.x,c.y);g.rotate(c.a+Math.PI/2);g.fillStyle='#07101c66';g.beginPath();g.ellipse(5,9,19,32,0,0,6.28);g.fill();if(P.tier>0&&(C.world===2||C.world===3)){g.fillStyle=isPlayer?'#6adff21b':'#596cdf16';g.beginPath();g.ellipse(0,3,25,39,0,0,6.28);g.fill()}
 // Front light cones are cheap gradients; no realtime shadow maps.
 if(P.tier>0&&(C.world===2||C.world===3)){g.fillStyle='#d8efff17';g.beginPath();g.moveTo(-12,-25);g.lineTo(-34,-102);g.lineTo(34,-102);g.lineTo(12,-25);g.closePath();g.fill()}
 g.globalAlpha=isPlayer&&c.inv>0?.6+Math.sin(elapsed*40)*.25:1;g.drawImage(imgs.vehicles,i*128,0,128,256,-18,-35,36,72);g.globalAlpha=1;if(isPlayer&&typeof Progression!=='undefined')Progression.drawLivery(g);
 if(!isPlayer){const phase=Math.sin(elapsed*19+c.x);g.fillStyle=phase>0?'#ff3149':'#6a9eff';g.fillRect(phase>0?-9:1,0,8,3);if(quality>.75){g.globalAlpha=.14;g.fillRect(-20,-3,40,8);g.globalAlpha=1}}if(isPlayer&&S.active>0){g.fillStyle='#61dfff';g.beginPath();g.moveTo(-9,32);g.lineTo(-4,32);g.lineTo(-6,53+Math.sin(elapsed*60)*7);g.closePath();g.fill();g.beginPath();g.moveTo(4,32);g.lineTo(9,32);g.lineTo(6,53+Math.cos(elapsed*60)*7);g.closePath();g.fill()}g.restore();return true;}
-function wreck(c){const w=wrecks[wreckIndex++%wrecks.length];Object.assign(w,{x:c.x,y:c.y,a:c.a,life:10,elite:c.elite});const f=flashes[flashIndex++%flashes.length];Object.assign(f,{x:c.x,y:c.y,life:.5});}
-function tick(dt){for(const w of wrecks)w.life=Math.max(0,w.life-dt);for(const f of flashes)f.life=Math.max(0,f.life-dt);const goal=Math.max((W<600?1.02:1.24)*(S.active>0?.89:1),W/1440,H/(1440*.94));zoom+=(goal-zoom)*Math.min(1,dt*2.3);smokeClock-=dt;if(smokeClock<=0){smokeClock=.18/P.config.fx;const source=player.hp<C.maxHp*.5?player:wrecks.find(w=>w.life>7);const p=source&&freeParticle();if(p)Object.assign(p,{x:source.x,y:source.y,vx:12,vy:-18,life:1.4,max:1.4,color:'#555963',r:8})}}
-function aftermath(g){if(P.tier===0)return;makeEffects();for(const w of wrecks)if(w.life>0&&ready(imgs.vehicles)){g.save();g.translate(w.x,w.y);g.rotate(w.a+Math.PI/2);g.globalAlpha=Math.min(.55,w.life*.2);g.drawImage(imgs.vehicles,(w.elite?6:5)*128,0,128,256,-18,-35,36,72);g.fillStyle='#171c23aa';g.fillRect(-13,-28,26,55);g.restore()}g.save();g.globalCompositeOperation='lighter';for(const f of flashes)if(f.life>0){g.globalAlpha=f.life*1.8;const d=(1-f.life)*120;g.drawImage(glow,f.x-d/2,f.y-d/2,d,d)}g.restore();}
+function wreck(c){const f=flashes[flashIndex++%flashes.length];Object.assign(f,{x:c.x,y:c.y,life:.5});}
+function tick(dt){for(const f of flashes)f.life=Math.max(0,f.life-dt);const goal=Math.max((W<600?1.02:1.24)*(S.active>0?.89:1),W/1440,H/(1440*.94));zoom+=(goal-zoom)*Math.min(1,dt*2.3);if(P.tier===0)return;smokeClock-=dt;if(smokeClock<=0){smokeClock=.18/P.config.fx;const p=player.hp<C.maxHp*.5&&freeParticle();if(p)Object.assign(p,{x:player.x,y:player.y,vx:12,vy:-18,life:1.4,max:1.4,color:'#555963',r:8})}}
+// Wreck flashes in every tier; no lingering wreck silhouettes.
+function aftermath(g){makeEffects();g.save();g.globalCompositeOperation='lighter';for(const f of flashes)if(f.life>0){g.globalAlpha=f.life*1.8;const d=(1-f.life)*120;g.drawImage(glow,f.x-d/2,f.y-d/2,d,d)}g.restore();}
 function particle(g,p){makeEffects();g.globalAlpha=Math.min(.75,p.life/p.max);if(p.color==='#eee0bc'||p.color==='#555963'){const size=p.r*(2+(1-p.life/p.max)*2);g.drawImage(p.color==='#555963'?smoke:dust,p.x-size,p.y-size,size*2,size*2)}else{g.strokeStyle=p.color;g.lineWidth=Math.max(1,p.r*.4);g.beginPath();g.moveTo(p.x,p.y);g.lineTo(p.x-p.vx*.018,p.y-p.vy*.018);g.stroke()}g.globalAlpha=1;}
 function finish(g){if(P.tier===0)return;if(vKey!==Math.ceil(W*.5)+':'+Math.ceil(H*.5)){vKey=Math.ceil(W*.5)+':'+Math.ceil(H*.5);if(vignette){vignette.width=1;vignette.height=1}vignette=surface(Math.ceil(W*.5),Math.ceil(H*.5));const v=vignette.getContext('2d');v.scale(.5,.5);const r=v.createRadialGradient(W*.5,H*.48,Math.min(W,H)*.25,W*.5,H*.5,Math.max(W,H)*.74);r.addColorStop(0,'#060f1900');r.addColorStop(.7,'#09132810');r.addColorStop(1,'#07122599');v.fillStyle=r;v.fillRect(0,0,W,H)}g.drawImage(vignette,0,0,W,H);if(C.world===0||C.world===3){g.fillStyle=C.world===0?'#ffb3540a':'#ed5f310d';g.fillRect(0,0,W,H)}if(S.active>0){g.strokeStyle='#9bdfff33';g.lineWidth=1;for(let i=0;i<10;i++){const x=(i*173+elapsed*85)%W,y=(i*139+elapsed*360)%H;g.beginPath();g.moveTo(x,y);g.lineTo(x,y+25);g.stroke()}}}
 function invalidate(){cacheKey='';if(P.tier===0&&vignette){vignette.width=vignette.height=1;vignette=null;vKey=''}}
 function suspend(){if(cache){cache.width=cache.height=1;cache=null}if(vignette){vignette.width=vignette.height=1;vignette=null}cacheKey=vKey=''}
-return{suspend,invalidate,reset,world,vehicle,wreck,tick,aftermath,particle,finish,get zoom(){return zoom},get ready(){return ready(imgs.vehicles)&&ready(imgs.terrain)&&ready(imgs.props)}};
+return{suspend,invalidate,reset,world,vehicle,wreck,tick,aftermath,particle,finish,get zoom(){return zoom},get ready(){return P.tier===0||ready(imgs.vehicles)&&ready(imgs.terrain)&&ready(imgs.props)}};
 })();
