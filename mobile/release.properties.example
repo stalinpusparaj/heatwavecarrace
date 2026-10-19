@@ -5,9 +5,11 @@ runroad.storeFile=keys/runroad-upload.jks
 runroad.storePassword=
 runroad.keyAlias=runroad-upload
 runroad.keyPassword=
+# Or leave the three password/alias lines empty and point at an existing keystore.properties:
+# runroad.keystoreProperties=/path/to/keystore.properties
 
-# Google Play Console → your app → Monetize with Play → Monetization setup → Licensing (Base64 RSA public key).
-runroad.playPublicKey=
+# RevenueCat → Project → Apps → RUNROAD (Play Store) → Public API key (starts with goog_).
+runroad.revenuecatKey=
 
 # AdMob → Apps → RUNROAD → App settings (App ID) and Ad units → rewarded unit (Ad unit ID).
 runroad.admobAppId=ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX

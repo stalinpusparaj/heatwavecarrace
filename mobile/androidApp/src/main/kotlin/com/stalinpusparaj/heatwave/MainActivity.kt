@@ -29,7 +29,7 @@ class MainActivity : Activity() {
     private lateinit var game: WebView
     private lateinit var root: FrameLayout
     private var rendererGone = false
-    private lateinit var billing: StoreBilling
+    private lateinit var billing: RevenueCatStore
     private lateinit var ads: RewardedAds
     private var storeReply: JavaScriptReplyProxy? = null
     private var adsReply: JavaScriptReplyProxy? = null
@@ -44,7 +44,7 @@ class MainActivity : Activity() {
         if (Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(0) { handleBack() }
         }
-        billing = StoreBilling(this, BuildConfig.PLAY_PUBLIC_KEY) { json -> send(storeReply, json) }
+        billing = RevenueCatStore(this, BuildConfig.REVENUECAT_KEY) { json -> send(storeReply, json) }
         ads = RewardedAds(this, BuildConfig.ADMOB_REWARDED_ID) { json -> send(adsReply, json) }
         openGame()
         billing.start()

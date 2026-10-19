@@ -26,3 +26,6 @@
 .rescue-hero{color:#d2eee3!important;font-size:14px!important;line-height:1.5}.rescue-hero b{color:#74ddbe}.rescue-lesson{display:block;color:#9fb3c3;font-size:11px;line-height:1.4}
 #rescueRibbon em{display:block;margin-top:6px;color:#ffe3b0;font-style:normal;line-height:1.45}
 body.overlay-open #hud,body.overlay-open #speedometer,body.overlay-open .bottom,body.overlay-open #skillHud,body.overlay-open #nitro,body.overlay-open #brake,body.overlay-open #routeMap,body.overlay-open #rescueRibbon,body.overlay-open #boardingStatus,body.overlay-open #missionHud,body.overlay-open #toast,body.overlay-open #joystick{visibility:hidden!important}
+.pass-tier{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin:6px 0;text-align:left}.pass-tier b{font-size:13px;letter-spacing:.06em}.pass-tier span{font-size:15px;font-weight:700}
+.supporter-offer ul li b{color:#ffd173}.pass-bonus{color:#74ddbe!important;font-weight:700;letter-spacing:.04em}
+.pass-tier.secondary{border:1px solid #ffd17366;background:#ffffff0d;border-radius:12px;padding:12px 16px;min-height:56px}

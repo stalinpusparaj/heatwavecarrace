@@ -37,8 +37,8 @@ Unlock five cars and upgrade engine, handling and armor with credits you earn by
 • Optional ad to double a level's credits, only when you choose
 • Every car, world and upgrade can be earned for free
 
-SUPPORTER COLLECTION (optional, one-time)
-Three exclusive liveries, string lights for every home, and a supporter badge. Cosmetic only: it never changes speed, grip or difficulty.
+RUNROAD PASS (optional: monthly, yearly or lifetime)
+2× credits after every win with no ads, a new exclusive livery every month, three Pass liveries, string lights on every home and a Pass badge. It never changes speed, grip or difficulty. Subscriptions renew automatically until cancelled in Google Play.
 
 Crews and live co-op are optional online modes.
 ```
@@ -55,17 +55,17 @@ Crews and live co-op are optional online modes.
 | Feature graphic | `feature-1024x500.png` | 1024 × 500 PNG/JPG |
 | Phone screenshots | `screenshot-*.png` | 2–8 images, 1080 × 2400 portrait |
 
-## In-app product
+## In-app products (RUNROAD Pass)
 
-Monetize with Play → Products → One-time products → Create:
+All three unlock the RevenueCat entitlement `supporter`; RevenueCat offering `default` has packages `$rc_monthly`, `$rc_annual` and `$rc_lifetime`.
 
-| Field | Value |
-|---|---|
-| Product ID | `runroad_supporter_pack` (must match exactly) |
-| Name | Supporter Collection |
-| Description | Three exclusive liveries, home string lights and a supporter badge. Cosmetic only. |
-| Purchase option | Buy, non-consumable (one per account) |
-| Price | Start around ₹199 / US$2.99 and let Play convert other regions |
+| Tier | Play product | Type | Price |
+|---|---|---|---|
+| Monthly | `runroad_pass`, base plan `monthly` | Auto-renewing subscription, 7-day grace period | US$1.49 · ₹80 (₹79 entered; Play rounds) |
+| Yearly | `runroad_pass`, base plan `yearly` | Auto-renewing subscription | US$7.99 · ₹500 |
+| Lifetime | `runroad_supporter_pack` (name "RUNROAD Pass (Lifetime)") | One-time, non-consumable | US$14.99 · ₹1,000 |
+
+Benefits shown on the Play subscription page: 2x credits after every win · New exclusive livery every month · Supporter cosmetics and badge.
 
 ## App content forms
 
@@ -92,7 +92,8 @@ Expected result: Teen / PEGI 7–12 range, depending on region.
 | Device or other IDs (advertising ID) | Yes (AdMob) | Yes, with Google for ads | Advertising, fraud prevention | Yes (ads are opt-in) |
 | Approximate location (from IP) | Yes (AdMob) | Yes, with Google for ads | Advertising, fraud prevention | Yes |
 | App interactions / diagnostics | Yes (AdMob) | Yes, with Google for ads | Advertising, analytics, fraud prevention | Yes |
-| Purchase history | Yes (Google Play Billing) | No | App functionality (unlock and restore) | Yes |
+| Purchase history | Yes (Google Play Billing, RevenueCat as our service provider) | No (service-provider processing is not "sharing" under Play's definition) | App functionality (unlock, renew and restore) | Yes |
+| User IDs (random RevenueCat app user ID) | Yes | No | App functionality | Yes |
 
 - Data is encrypted in transit: Yes.
 - Users can request deletion: Yes, by emailing the support address (Crew accounts). On-device progress is deleted with app data.

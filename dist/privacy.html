@@ -22,7 +22,7 @@ table{width:100%;border-collapse:collapse;margin:12px 0}th,td{text-align:left;ve
 <ul>
 <li>You can play the whole campaign offline, without an account. Your progress stays on your device.</li>
 <li>The Android app shows ads only when you choose to watch one. Google AdMob serves those ads.</li>
-<li>Purchases are processed by Google Play. We never see your payment details.</li>
+<li>Purchases and subscriptions are processed by Google Play and managed through RevenueCat. We never see your payment details. Cancel subscriptions anytime in Google Play.</li>
 <li>Optional online features (Crews and live co-op) send only what they need to work.</li>
 <li>We do not sell your personal information, and RUNROAD has no analytics or tracking SDK of its own.</li>
 </ul>
@@ -32,7 +32,7 @@ table{width:100%;border-collapse:collapse;margin:12px 0}th,td{text-align:left;ve
 <tr><th>Feature</th><th>Data</th><th>Purpose and recipient</th></tr>
 <tr><td>Game progress</td><td>Levels, stars, credits, cars, upgrades, liveries, settings, cached purchase status</td><td>Stored only on your device (browser or app storage). Clearing app data or uninstalling deletes it.</td></tr>
 <tr><td>Rewarded ads (Android, optional)</td><td>Advertising ID, device and app information, approximate location from IP address, ad interactions</td><td>Google AdMob, to serve and measure ads, prevent fraud, and, where you allow it, personalise ads. See <a href="https://policies.google.com/technologies/partner-sites" rel="noopener">how Google uses data</a>.</td></tr>
-<tr><td>Purchases (Android, optional)</td><td>Purchase token, product, purchase status</td><td>Google Play Billing processes payment. The app checks Google's signed receipt on your device to unlock cosmetic items and restore them.</td></tr>
+<tr><td>RUNROAD Pass purchases and subscriptions (Android, optional)</td><td>A random app user ID, purchase token, product, purchase and renewal status, device and app information</td><td>Google Play Billing processes payment. RevenueCat, our purchase-management provider, validates receipts and tracks whether your Pass is active so it can be restored and renewed. RevenueCat acts on our behalf and does not sell this data. See <a href="https://www.revenuecat.com/privacy" rel="noopener">RevenueCat's privacy policy</a>.</td></tr>
 <tr><td>Crews (optional sign-in)</td><td>Email address, account ID, crew name, crew membership and co-op results</td><td>Stored with our backend provider (Supabase) to sign you in and run your crew. The email is used only for sign-in links.</td></tr>
 <tr><td>Live co-op (optional)</td><td>Room code, in-game driving inputs and positions, IP address (technical)</td><td>Sent to our match server to run the session in real time. Not used to identify you; not stored after the session except crew results.</td></tr>
 </table>
