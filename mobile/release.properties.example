@@ -1,0 +1,18 @@
+# Copy to mobile/release.properties (git-ignored) and fill in. Never commit the real file.
+
+# Upload key created by scripts/create-upload-key.sh (path relative to mobile/).
+runroad.storeFile=keys/runroad-upload.jks
+runroad.storePassword=
+runroad.keyAlias=runroad-upload
+runroad.keyPassword=
+
+# Google Play Console → your app → Monetize with Play → Monetization setup → Licensing (Base64 RSA public key).
+runroad.playPublicKey=
+
+# AdMob → Apps → RUNROAD → App settings (App ID) and Ad units → rewarded unit (Ad unit ID).
+runroad.admobAppId=ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX
+runroad.admobRewardedId=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
+
+# Raise versionCode by 1 for every upload to Play.
+runroad.versionCode=1
+runroad.versionName=1.0.0

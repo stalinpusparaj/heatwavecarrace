@@ -16,6 +16,7 @@ import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
@@ -28,7 +29,10 @@ class MainActivity : Activity() {
     private lateinit var game: WebView
     private lateinit var root: FrameLayout
     private var rendererGone = false
-    private var storeCatalog: StoreCatalog? = null
+    private lateinit var billing: StoreBilling
+    private lateinit var ads: RewardedAds
+    private var storeReply: JavaScriptReplyProxy? = null
+    private var adsReply: JavaScriptReplyProxy? = null
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingExport: ByteArray? = null
 
@@ -40,15 +44,23 @@ class MainActivity : Activity() {
         if (Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(0) { handleBack() }
         }
+        billing = StoreBilling(this, BuildConfig.PLAY_PUBLIC_KEY) { json -> send(storeReply, json) }
+        ads = RewardedAds(this, BuildConfig.ADMOB_REWARDED_ID) { json -> send(adsReply, json) }
         openGame()
+        billing.start()
+        ads.start()
+    }
+
+    private fun send(reply: JavaScriptReplyProxy?, json: String) {
+        if (!isDestroyed && !rendererGone) runCatching { reply?.postMessage(json) }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun openGame() {
         root.removeAllViews()
         rendererGone = false
-        storeCatalog?.close()
-        storeCatalog = StoreCatalog(this)
+        storeReply = null
+        adsReply = null
         game = WebView(this)
         val loader = WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this)).build()
@@ -82,14 +94,12 @@ class MainActivity : Activity() {
         }
         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
             WebViewCompat.addWebMessageListener(game, "RunroadStore", setOf(GameShell.androidOrigin)) { _, message, origin, mainFrame, reply ->
-                if (mainFrame && origin.toString() == GameShell.androidOrigin) {
-                    val raw = message.data ?: ""
-                    if (raw.length <= 256 && runCatching { JSONObject(raw).getString("type") }.getOrNull() == "catalog") {
-                        runOnUiThread { storeCatalog?.query { result ->
-                            runOnUiThread { if (!isDestroyed && !rendererGone) runCatching { reply.postMessage(result) } }
-                        } }
-                    }
-                }
+                val raw = message.data ?: ""
+                if (mainFrame && origin.toString() == GameShell.androidOrigin && raw.length <= 256) { storeReply = reply; billing.handle(raw) }
+            }
+            WebViewCompat.addWebMessageListener(game, "RunroadAds", setOf(GameShell.androidOrigin)) { _, message, origin, mainFrame, reply ->
+                val raw = message.data ?: ""
+                if (mainFrame && origin.toString() == GameShell.androidOrigin && raw.length <= 256) { adsReply = reply; ads.handle(raw) }
             }
             WebViewCompat.addWebMessageListener(game, "RunroadFiles", setOf(GameShell.androidOrigin)) { _, message, origin, mainFrame, _ ->
                 if (mainFrame && origin.toString() == GameShell.androidOrigin && pendingExport == null) {
@@ -189,11 +199,13 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         if (::game.isInitialized && !rendererGone) { game.resumeTimers(); game.onResume() }
+        if (::billing.isInitialized) billing.refresh()
         immersive()
     }
     override fun onDestroy() {
         if (::game.isInitialized && !rendererGone) { root.removeView(game); game.stopLoading(); game.destroy() }
-        storeCatalog?.close()
+        if (::billing.isInitialized) billing.close()
+        if (::ads.isInitialized) ads.close()
         fileCallback?.onReceiveValue(null)
         fileCallback = null
         pendingExport = null

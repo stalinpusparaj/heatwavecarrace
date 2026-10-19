@@ -9,3 +9,10 @@ mobile/.idea/
 server/node_modules/
 
 supabase/.temp/
+
+# Store signing and IDs: never commit.
+mobile/release.properties
+*.jks
+*.keystore
+*.aab
+mobile/keys/

@@ -1,5 +1,7 @@
 # RUNROAD — progression and monetization implementation
 
+> **Update (19 October 2026, later):** Checkout, on-device receipt verification, restore, and opt-in rewarded ads with consent are now implemented. `StoreBilling.kt` replaces the read-only `StoreCatalog.kt`, and `RewardedAds.kt` adds ads. See [STORE_RELEASE.md](STORE_RELEASE.md). The sections below about a read-only adapter describe the earlier build.
+
 19 October 2026. This release adds playable engagement features and a read-only native Google Play catalog connection. **It does not charge money, deliver advertisements or grant paid entitlements.** Play Console/AdMob configuration has not been supplied.
 
 ## Playable features

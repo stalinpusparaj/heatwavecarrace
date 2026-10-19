@@ -1,0 +1,23 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+// Supporter entitlements come only from the native Play bridge; ads reward once per earned callback.
+const stored={},posted=[];const bridge={postMessage:m=>posted.push(JSON.parse(m))};
+const ctx={console,localStorage:{getItem:k=>stored[k]||null,setItem:(k,v)=>stored[k]=v},C:{awardCredits:()=>true,open(){}},R:{active:false},V:{active:false},state:'playing',window:{RunroadStore:bridge},document:{getElementById:()=>null}};
+vm.createContext(ctx);vm.runInContext(fs.readFileSync('dist/progression.js','utf8'),ctx);const p=vm.runInContext('Progression',ctx);
+assert.equal(p.supporter,false);assert.equal(p.equip('golden'),false,'paid finish locked without entitlement');
+p.storeInit();assert.equal(posted[0].type,'state');assert.ok(!p.view('style').includes('data-store-buy'),'no buy button before Play answers');
+p.receiveStore({type:'store',checkoutEnabled:true,products:[{id:'runroad_supporter_pack',price:'₹199<script>'}],owned:[],pending:[],restored:true,message:'Ready.'});
+let html=p.view('style');assert.ok(html.includes('data-store-buy')&&html.includes('₹199script'),'sanitized Play price on buy button');assert.ok(!html.includes('<script>'));
+p.receiveStore({type:'store',checkoutEnabled:true,products:[],owned:[],pending:['runroad_supporter_pack'],restored:true,message:''});assert.ok(p.view('style').includes('Payment pending'));assert.equal(p.supporter,false);
+p.receiveStore({type:'store',checkoutEnabled:true,products:[],owned:['runroad_supporter_pack','fake_item'],pending:[],restored:true,message:'Thanks'});
+assert.equal(p.supporter,true);assert.equal(p.data.equipped,'golden','first purchase equips a supporter finish');assert.equal(p.equip('aurora'),true);
+assert.deepEqual(JSON.parse(stored['runroad-store-v1']).owned,['runroad_supporter_pack']);assert.ok(!p.data.owned.includes('aurora'),'paid finishes never enter the local owned list');
+p.receiveStore({type:'store',checkoutEnabled:true,products:[],owned:[],pending:[],restored:true,message:''});assert.equal(p.supporter,false,'refund removes entitlement');assert.equal(p.owns('aurora'),false);
+const web={...ctx,window:{}};vm.createContext(web);vm.runInContext(fs.readFileSync('dist/progression.js','utf8'),web);assert.ok(vm.runInContext('Progression',web).view('style').includes('not on sale'));
+const ads={window:{RunroadAds:{postMessage:m=>sent.push(JSON.parse(m))}},Date,JSON};const sent=[];vm.createContext(ads);vm.runInContext(fs.readFileSync('dist/ads.js','utf8')+'\nthis.A=Ads',ads);const A=ads.A;A.init();
+const send=m=>ads.window.RunroadAds.onmessage({data:JSON.stringify(m)});let rewards=0,closes=0;
+assert.equal(A.show(()=>rewards++,()=>closes++),false,'no ad shown before one is loaded');send({type:'ads',ready:true,privacy:true});assert.equal(A.privacy,true);
+assert.equal(A.show(()=>rewards++,()=>closes++),true);const token=sent.at(-1).token;assert.equal(A.show(()=>rewards++,()=>{}),false,'one ad at a time');
+send({type:'ad',event:'reward',token:'forged'});send({type:'ad',event:'reward',token});send({type:'ad',event:'reward',token});send({type:'ad',event:'closed',token});assert.equal(rewards,1);assert.equal(closes,1);
+send({type:'ads',ready:true});A.show(()=>rewards++,()=>closes++);send({type:'ad',event:'closed',token:sent.at(-1).token});assert.equal(rewards,1,'closing early grants nothing');
+const none={window:{}};vm.createContext(none);vm.runInContext(fs.readFileSync('dist/ads.js','utf8')+'\nthis.A=Ads',none);assert.equal(none.A.available,false);
+console.log('PASS: Play-only supporter entitlement, pending/refund/restore states, sanitized prices, no paid items in local saves, one reward per earned ad, no ads on web');
