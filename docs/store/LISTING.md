@@ -45,7 +45,7 @@ Crews and live co-op are optional online modes.
 
 **App category:** Game → Racing. **Tags:** Arcade, Racing, Casual, Offline.
 **Contact email:** gemmyapps@gmail.com
-**Privacy policy URL:** `https://heatwave-desert-run.stalinpusparaj47.chatgpt.site/privacy.html` once the Site is redeployed with the current `dist/` (or any public HTTPS URL that serves `dist/privacy.html`).
+**Privacy policy URL:** `https://stalinpusparaj.github.io/heatwavecarrace/privacy.html` (gh-pages branch). Account deletion: `https://stalinpusparaj.github.io/heatwavecarrace/delete-account.html`.
 
 ## Graphics (in `docs/store/`)
 
@@ -53,7 +53,7 @@ Crews and live co-op are optional online modes.
 |---|---|---|
 | App icon | `icon-512.png` | 512 × 512 PNG |
 | Feature graphic | `feature-1024x500.png` | 1024 × 500 PNG/JPG |
-| Phone screenshots | `screenshot-*.png` | 2–8 images, 1080 × 2400 portrait |
+| Phone screenshots | `screenshot-*.png` | 2–8 images, 1080 × 1920 portrait |
 
 ## In-app products (RUNROAD Pass)
 
